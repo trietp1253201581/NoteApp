@@ -15,12 +15,12 @@ public class SurveyBlock extends NoteBlock {
     private Map<String, Boolean> surveyMap;
 
     public SurveyBlock() {
-        super();
+        super(BlockType.SURVEY);
         this.surveyMap = new HashMap<>();
     }
 
     public SurveyBlock(Map<String, Boolean> surveyMap) {
-        super();
+        super(BlockType.SURVEY);
         this.surveyMap = surveyMap;
     }
 

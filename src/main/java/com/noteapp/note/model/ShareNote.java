@@ -15,7 +15,7 @@ import java.util.Objects;
 public class ShareNote extends Note {
     private String editor;
     private ShareType shareType;
-    private Map<String, List<NoteBlock>> otherEditorBlocks;
+    private Map<Integer, List<NoteBlock>> otherEditorBlocks;
     
     /**
      * Định nghĩa các kiểu Share
@@ -31,14 +31,14 @@ public class ShareNote extends Note {
         this.otherEditorBlocks = new HashMap<>();
     }
 
-    public ShareNote(String receiver, ShareType shareType, Map<String, List<NoteBlock>> otherEditorBlocks) {
+    public ShareNote(String receiver, ShareType shareType, Map<Integer, List<NoteBlock>> otherEditorBlocks) {
         super();
         this.editor = receiver;
         this.shareType = shareType;
         this.otherEditorBlocks = otherEditorBlocks;
     }
 
-    public ShareNote(String receiver, ShareType shareType, Map<String, List<NoteBlock>> otherEditorBlocks, int id, String author, String header, List<NoteBlock> blocks, Date lastModifiedDate, List<NoteFilter> filters) {
+    public ShareNote(String receiver, ShareType shareType, Map<Integer, List<NoteBlock>> otherEditorBlocks, int id, String author, String header, List<NoteBlock> blocks, Date lastModifiedDate, List<NoteFilter> filters) {
         super(id, author, header, blocks, lastModifiedDate, filters);
         this.editor = receiver;
         this.shareType = shareType;
@@ -61,28 +61,24 @@ public class ShareNote extends Note {
         this.shareType = shareType;
     }
 
-    public Map<String, List<NoteBlock>> getOtherEditorBlocks() {
+    public Map<Integer, List<NoteBlock>> getOtherEditorBlocks() {
         return otherEditorBlocks;
     }
 
-    public void setOtherEditorBlocks(Map<String, List<NoteBlock>> otherEditorBlocks) {
+    public void setOtherEditorBlocks(Map<Integer, List<NoteBlock>> otherEditorBlocks) {
         this.otherEditorBlocks = otherEditorBlocks;
     }
     
-    public List<NoteBlock> getOtherEditorBlocksOf(String header) {
-        return otherEditorBlocks.get(header);
-    }
-    
-    public void setOtherEditorBlocksOf(String editor, List<NoteBlock> otherEditorBlocksOf) {
-        otherEditorBlocks.put(editor, otherEditorBlocksOf);
+    public List<NoteBlock> getOtherEditorBlocksOf(int blockId) {
+        return otherEditorBlocks.get(blockId);
     }
     
     public void addOtherEditorBlock(NoteBlock otherEditorBlock) {
-        String blockHeader = otherEditorBlock.getHeader();
-        if(!otherEditorBlocks.containsKey(blockHeader)) {
-            otherEditorBlocks.put(blockHeader, new ArrayList<>());
+        int blockId = otherEditorBlock.getId();
+        if(!otherEditorBlocks.containsKey(blockId)) {
+            otherEditorBlocks.put(blockId, new ArrayList<>());
         }
-        otherEditorBlocks.get(blockHeader).add(otherEditorBlock);
+        otherEditorBlocks.get(blockId).add(otherEditorBlock);
     }
 
     @Override

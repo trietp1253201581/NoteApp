@@ -6,8 +6,9 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 
 /**
- *
- * @author admin
+ * Một Controller cho việc hiển thị các Note đang được mở trên trang edit
+ * @author Nhóm 17
+ * @see EditNoteController
  */
 public class OpenedNoteCardController extends Controller {
     @FXML
@@ -16,7 +17,7 @@ public class OpenedNoteCardController extends Controller {
     private ImageView removeNote;
     
     private Note note;
-
+    
     public Note getNote() {
         return note;
     }

@@ -4,8 +4,8 @@ import com.noteapp.common.dao.DAOException;
 import com.noteapp.note.model.ShareNote;
 import java.util.List;
 /**
- *
- * @author admin
+ * Cung cấp các phương thức thao tác với CSDL ShareNote
+ * @author Nhóm 17
  */
 public interface IShareNoteDAO {
     

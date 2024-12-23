@@ -29,6 +29,10 @@ public class NoteBlock {
         this.blockType = BlockType.TEXT;
     }
 
+    public NoteBlock(BlockType blockType) {
+        this.blockType = blockType;
+    }
+
     public NoteBlock(String header, String editor, BlockType blockType) {
         this.id = -1;
         this.order = -1;

@@ -2,31 +2,22 @@ package com.noteapp.note.dao;
 
 import com.noteapp.common.dao.FailedExecuteException;
 import com.noteapp.common.dao.DAOException;
-import com.noteapp.common.dbconnection.MySQLDatabaseConnection;
-import com.noteapp.common.dbconnection.SQLDatabaseConnection;
+import com.noteapp.common.dao.connection.MySQLDatabaseConnection;
+import com.noteapp.common.dao.sql.SQLReader;
 import com.noteapp.note.model.TextBlock;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Triển khai các phương thức thao tác CSDL TextBlock
  * @author Nhóm 17
  */
-public class TextBlockDAO implements ITextBlockDAO {
-    protected SQLDatabaseConnection databaseConnection;
-    protected Map<String, String> enableQueries;
+public class TextBlockDAO extends AbstractNoteDAO implements IConcreateBlockDAO<TextBlock> {
     
     protected static final String SQL_FILE_DIR = "src/main/java/com/noteapp/note/db/TextBlockQueries.sql";
-
-    protected static final String DATABASE_HOST = "localhost";  
-    protected static final int DATABASE_PORT = 3306;
-    protected static final String DATABASE_NAME = "notelitedb";
-    protected static final String DATABASE_USERNAME = "root";
-    protected static final String DATABASE_PASSWORD = "Asensio1234@";
 
     protected static enum ColumnName {
         block_id, editor, content;
@@ -38,13 +29,12 @@ public class TextBlockDAO implements ITextBlockDAO {
     
     private TextBlockDAO() {
         //init connection
-        databaseConnection = new MySQLDatabaseConnection
-            (DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, 
-                    DATABASE_USERNAME, DATABASE_PASSWORD);
-        databaseConnection.connect();
-        //Get enable Queries
-        databaseConnection.readSQL(SQL_FILE_DIR);
-        enableQueries = databaseConnection.getEnableQueries();
+        setDatabaseConnection(new MySQLDatabaseConnection(DATABASE_HOST, DATABASE_PORT, 
+            DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD));
+        initConnection();
+        //get enable query
+        setFileReader(new SQLReader());
+        getEnableQueriesFrom(SQL_FILE_DIR);
     }
     
     private static class SingletonHelper {
@@ -58,32 +48,12 @@ public class TextBlockDAO implements ITextBlockDAO {
     public static TextBlockDAO getInstance() {
         return SingletonHelper.INSTANCE;
     }
-    
-    /**
-     * Lấy và trả về một câu lệnh được chuẩn bị sẵn theo loại truy vấn
-     * @param queriesType loại truy vấn
-     * @return Một {@link PrepareStatement} là môt câu lệnh truy vấn SQL
-     * đã được chuẩn bị sẵn tương ứng với loại truy vấn được yêu cầu
-     * @throws SQLException Nếu kết nối tới CSDL không tồn tại hoặc
-     * xảy ra vấn đề khi tạo câu lệnh
-     * @see java.sql.Connection#prepareStatement(String)
-     */
-    protected PreparedStatement getPrepareStatement(QueriesType queriesType) throws SQLException {
-        //Kiểm tra kết nối
-        if (databaseConnection.getConnection() == null) {
-            throw new SQLException("Connection null!");
-        }
-        
-        //Lấy query và truyền vào connection
-        String query = enableQueries.get(queriesType.toString());
-        return databaseConnection.getConnection().prepareStatement(query);
-    }
 
     @Override
     public List<TextBlock> getAll(int blockId) throws DAOException {
         try {
             //Thực thi truy vấn SQL và lấy kết quả là một bộ dữ liệu
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL_BY_BLOCK);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL_BY_BLOCK.toString());
             preparedStatement.setInt(1, blockId);
             ResultSet resultSet = preparedStatement.executeQuery();
             //Chuyển từng hàng dữ liệu sang textBlock và thêm vào list
@@ -107,7 +77,7 @@ public class TextBlockDAO implements ITextBlockDAO {
     public void create(TextBlock newTextBlock) throws DAOException {
         try {
             //Thực thi truy vấn SQL và lấy kết quả là một bộ dữ liệu
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.CREATE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.CREATE.toString());
             preparedStatement.setInt(1, newTextBlock.getId());
             preparedStatement.setString(2, newTextBlock.getEditor());
             preparedStatement.setString(3, newTextBlock.getContent());
@@ -124,7 +94,7 @@ public class TextBlockDAO implements ITextBlockDAO {
     public void update(TextBlock textBlock) throws DAOException {
         try {
             //Thực thi truy vấn SQL và lấy kết quả là một bộ dữ liệu
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.UPDATE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.UPDATE.toString());
             preparedStatement.setString(1, textBlock.getContent());
             preparedStatement.setInt(2, textBlock.getId());
             preparedStatement.setString(3, textBlock.getEditor());

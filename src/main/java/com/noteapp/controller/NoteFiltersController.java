@@ -5,11 +5,10 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 
 /**
- * FXML Controller class cho filter
+ * FXML Controller class cho các Note filter
  *
- * @author Nhóm 23
- * @since 31/03/2024
- * @version 1.0
+ * @author Nhóm 17
+ * @see EditNoteController
  */
 public class NoteFiltersController extends Controller {
     //Thuộc tính FXML

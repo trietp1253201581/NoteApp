@@ -9,11 +9,11 @@ public class TextBlock extends NoteBlock {
     private String content;
 
     public TextBlock() {
-        super();
+        super(BlockType.TEXT);
     }
 
     public TextBlock(String content) {
-        super();
+        super(BlockType.TEXT);
         this.content = content;
     }
 

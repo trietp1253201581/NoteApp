@@ -14,7 +14,7 @@ module com.noteapp {
     exports com.noteapp.controller;
     
     exports com.noteapp.common.dao;
-    exports com.noteapp.common.dbconnection;
+    exports com.noteapp.common.dao.connection;
     exports com.noteapp.user.model;
     exports com.noteapp.user.dao;
     exports com.noteapp.user.service;

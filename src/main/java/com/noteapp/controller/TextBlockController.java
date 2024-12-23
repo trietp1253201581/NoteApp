@@ -13,22 +13,15 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.Region;
 
 /**
- *
- * @author admin
+ * Một Controller để hiển thị một Text Block lên trang Edit
+ * @author Nhóm 17
+ * @see EditNoteController
  */
-public class TextBlockController extends Controller {
-    @FXML
-    private Label viewText;
+public class TextBlockController extends InitableController {
     @FXML
     private TextArea editableText;
     @FXML
-    private Button editButton;
-    @FXML
-    private Button saveButton;
-    @FXML
     private Button deleteButton;
-    @FXML
-    private Button setToDefaultButton;
     @FXML
     private ComboBox<String> otherEditComboBox;
     @FXML
@@ -46,24 +39,13 @@ public class TextBlockController extends Controller {
     
     private int noteId;
     private TextBlock textBlock;
-    private boolean isEditing;
     private List<TextBlock> otherEditors;
     
     @Override
     public void init() {
         noteId = -1;
         textBlock = new TextBlock();
-        isEditing = false;
         
-        editButton.setOnAction((ActionEvent event) -> {
-            setEditable(true);
-            switchToEditableText();
-        });
-        
-        saveButton.setOnAction((ActionEvent event) -> {
-            setEditable(false);
-            switchToViewText();
-        });
         returnToYoursButton.setOnAction((ActionEvent event) -> {
             returnToYourContent();
         });
@@ -94,14 +76,16 @@ public class TextBlockController extends Controller {
         this.textBlock = textBlock;
     }
 
-    public void setIsEditing(boolean isEditing) {
-        this.isEditing = isEditing;
-    }
-    
     public void setOtherEditors(List<TextBlock> otherEditors) {
         this.otherEditors = otherEditors;
     }
 
+    /**
+     * Cập nhật trạng thái của các phiên bản chỉnh sửa bởi các editor
+     * khác với của block này
+     * @param otherEditors Một list các phiên bản khác của Block này 
+     * được chỉnh sửa bởi các editor khác
+     */
     public void updateOtherEditors(List<TextBlock> otherEditors) {
         List<String> hadModifiedEditor = new ArrayList<>();
         for (TextBlock oldBlock: this.otherEditors) {
@@ -118,20 +102,8 @@ public class TextBlockController extends Controller {
         this.otherEditors = otherEditors;
     }
 
-    public Button getEditButton() {
-        return editButton;
-    }
-
-    public Button getSaveButton() {
-        return saveButton;
-    }
-
     public Button getDeleteButton() {
         return deleteButton;
-    }
-
-    public Button getSetToDefaultButton() {
-        return setToDefaultButton;
     }
 
     public Button getUpButton() {
@@ -162,10 +134,6 @@ public class TextBlockController extends Controller {
         return textBlock;
     }
 
-    public boolean isIsEditing() {
-        return isEditing;
-    }
-
     public List<TextBlock> getOtherEditors() {
         return otherEditors;
     }
@@ -174,44 +142,26 @@ public class TextBlockController extends Controller {
         return otherEditComboBox.getSelectionModel().getSelectedItem();
     }
     
-    public String getTextFromView() {
-        return viewText.getText();
-    }
-    
-    public String getTextFromArea() {
+    public String getText() {
         return editableText.getText();
     }
     
-    public void setTextForView(String text) {
-        viewText.setText(text);
-    }
-    
-    public void setTextForArea(String text) {
+    public void setText(String text) {
         editableText.setText(text);
-    }
-    
-    public void setEditable(boolean editable) {
-        viewText.setVisible(!editable);
-        editableText.setVisible(editable);
-        isEditing = editable;
-    }
-    
-    public void switchToEditableText() {        
-        editableText.setText(viewText.getText());
-        editableText.setPrefHeight(viewText.getPrefHeight());
-        editableText.setPrefRowCount(viewText.getText().split("\n").length);
-    }
-    
-    public void switchToViewText() {
-        viewText.setText(editableText.getText());
-        viewText.setPrefHeight(Region.USE_COMPUTED_SIZE);
     }
     
     public void returnToYourContent() {
         editableText.setText(textBlock.getContent());
-        switchToViewText();
+    }
+
+    public Label getBlockHeader() {
+        return blockHeader;
     }
     
+    /**
+     * Thay đổi thông báo nếu có editor nào khác vừa chỉnh sửa block
+     * @param hadModifiedEditors Những editor vừa chỉnh sửa block này
+     */
     public void setChangeNotify(List<String> hadModifiedEditors) {
         if(hadModifiedEditors.isEmpty()) {
             changeNotify.setText("");

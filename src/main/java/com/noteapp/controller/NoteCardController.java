@@ -7,11 +7,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
 /**
- * FXML Controller class cho các Note Card
- *
- * @author Nhóm 23
- * @since 31/03/2024
- * @version 1.0
+ * FXML Controller class cho các Note Card hiển thị trên trang dashboard
+ * @author Nhóm 17
+ * @see DashboardController
  */
 public class NoteCardController extends Controller {  
     //Các thuộc tính FXML

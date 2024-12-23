@@ -7,10 +7,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 
 /**
- *
- * @author admin
+ * Một class Controller để hiển thị các lựa chọn trong một Survey Block
+ * @author Nhóm 17
+ * @see SurveyBlockController
  */
-public class SurveyItemController extends Controller {
+public class SurveyItemController extends InitableController {
     @FXML
     private Label choice;
     @FXML
@@ -26,7 +27,7 @@ public class SurveyItemController extends Controller {
     public void init() {
         voted.setSelected(false);
         num.setText("0");
-        other.setText("");
+        other.setText("No one");
     }
     
     public void setChoice(String choice) {
@@ -47,6 +48,7 @@ public class SurveyItemController extends Controller {
     
     public void setOther(List<String> others) {
         if (others.isEmpty()) {
+            other.setText("No one");
             return;
         }
         String otherStr = "";

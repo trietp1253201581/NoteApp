@@ -1,9 +1,12 @@
 package com.noteapp.controller;
 
+import com.noteapp.user.dao.UserDAO;
 import com.noteapp.user.model.Email;
 import com.noteapp.user.model.User;
+import com.noteapp.user.service.IUserService;
+import com.noteapp.user.service.UserService;
 import com.noteapp.user.service.security.MailjetSevice;
-import com.noteapp.user.service.security.SixNumVerificationCodeService;
+import com.noteapp.user.service.security.SixNumCodeGenerator;
 import com.noteapp.user.service.security.VerificationMailService;
 import com.noteapp.user.service.UserServiceException;
 import java.io.IOException;
@@ -24,13 +27,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 /**
- * FXML Controller class cho Register GUI
+ * FXML Controller class cho trang Register
  * 
- * @author Nhóm 23
- * @since 31/03/2024
- * @version 1.0
+ * @author Nhóm 17
  */
-public class RegisterController extends Controller {
+public class RegisterController extends InitableController {
     //Các thuộc tính FXML    
     @FXML
     private TextField nameField;
@@ -73,10 +74,16 @@ public class RegisterController extends Controller {
     @FXML
     private Button closeButton;
     
+    private IUserService userService;
+    private VerificationMailService verificationMailService;
+    private User newUser;
+    
     @Override
     public void init() {
-        initServerService();
-        initScene();
+        userService = new UserService(UserDAO.getInstance());   
+        verificationMailService = new VerificationMailService(new MailjetSevice(), 
+                    new SixNumCodeGenerator());
+        initView();
         registerButton.setOnAction((ActionEvent event) -> {
             register();
         }); 
@@ -87,8 +94,16 @@ public class RegisterController extends Controller {
             LoginController.open(stage);
         });
     }
+
+    public void setUserService(IUserService userService) {
+        this.userService = userService;
+    }
+
+    public void setVerificationMailService(VerificationMailService verificationMailService) {
+        this.verificationMailService = verificationMailService;
+    }
     
-    protected void initScene() {
+    protected void initView() {
         //Ẩn các error label
         errorNameFieldLabel.setVisible(false);
         errorUsernameFieldLabel.setVisible(false);
@@ -101,28 +116,23 @@ public class RegisterController extends Controller {
         
     }
     
-    protected void register() {
-        initScene();
-        //Thiết lập các thuộc tính cho new user
-        User newUser = new User();
-        //Láy thông tin name
-        if("".equals(nameField.getText())) {
-            errorNameFieldLabel.setVisible(true);
-        }
-        newUser.setName(nameField.getText());
-        //Lấy username
-        if("".equals(usernameField.getText())) {
-            errorUsernameFieldLabel.setVisible(true);
-        }
-        newUser.setUsername(usernameField.getText());
-        //Lấy password
+    private void getPasswordFromField() {
         if("".equals(passwordField.getText())) {
             errorPasswordFieldLabel.setVisible(true);
         }
         newUser.setPassword(passwordField.getText());
-        //Lấy school
-        newUser.setSchool(schoolField.getText());
-        //Lấy thông tin về birth
+    }
+    
+    private void getEmailFromField() {
+        Email email = new Email();
+        email.setAddress(emailAddressField.getText());
+        if(!email.checkAddress()) {
+            errorEmailFieldLabel.setVisible(true);
+        }
+        newUser.setEmail(email);
+    }
+    
+    private void getBirthdayFromField() {
         int dayOfBirth = -1;
         int monthOfBirth = -1;
         int yearOfBirth = -1;
@@ -150,7 +160,23 @@ public class RegisterController extends Controller {
         if(!errorBirthdayFieldLabel.isVisible()) {
             newUser.setBirthday(Date.valueOf(LocalDate.of(yearOfBirth, monthOfBirth, dayOfBirth)));
         }
-        //Lấy gender
+    }
+    private void getNameFromField() {
+        //Láy thông tin name
+        if("".equals(nameField.getText())) {
+            errorNameFieldLabel.setVisible(true);
+        }
+        newUser.setName(nameField.getText());
+    }
+    
+    private void getUsernameFromField() {
+        if("".equals(usernameField.getText())) {
+            errorUsernameFieldLabel.setVisible(true);
+        }
+        newUser.setUsername(usernameField.getText());
+    }
+    
+    private void getGenderFromBox() {
         if(genderMale.isSelected()) {
             newUser.setGender(User.Gender.MALE);
         } else if (genderFemale.isSelected()) {
@@ -158,57 +184,86 @@ public class RegisterController extends Controller {
         } else {
             newUser.setGender(User.Gender.OTHER);
         }
+    }
+    
+    private boolean checkErrorAccountInfo() {
+        return errorNameFieldLabel.isVisible() || errorPasswordFieldLabel.isVisible() 
+                || errorBirthdayFieldLabel.isVisible() || errorEmailFieldLabel.isVisible()
+                || errorUsernameFieldLabel.isVisible();
+    }
+    /**
+     * Tiến hành lấy dữ liệu từ các field tương ứng để set dữ liệu cho {@link User},
+     * thông qua đó thêm User này vào CSDL
+     */
+    protected void register() {
+        initView();
+        //Thiết lập các thuộc tính cho new user
+        newUser = new User();
+        //Láy thông tin name
+        getNameFromField();
+        //Lấy username
+        getUsernameFromField();
+        //Lấy password
+        getPasswordFromField();
+        //Lấy school
+        newUser.setSchool(schoolField.getText());
+        //Lấy thông tin về birth
+        getBirthdayFromField();
+        //Lấy gender
+        getGenderFromBox();
         //Lấy email
-        //Lấy Email
-        Email email = new Email();
-        email.setAddress(emailAddressField.getText());
-        email.setName(emailNameField.getText());
-        if(!email.checkEmailAddress()) {
-            errorEmailFieldLabel.setVisible(true);
-        }
-        newUser.setEmail(email);
+        getEmailFromField();
         //Kiểm tra xem có lỗi nào không
-        if(errorNameFieldLabel.isVisible() || errorUsernameFieldLabel.isVisible()
-                || errorPasswordFieldLabel.isVisible() || errorBirthdayFieldLabel.isVisible()
-                || errorEmailFieldLabel.isVisible()) {
+        if(checkErrorAccountInfo()) {
             return;
         }
-        
+        if (!checkVerifyEmail()) {
+            return;
+        }
         createUser(newUser);
     }
     
-    protected void createUser(User newUser) {
+    private boolean checkVerifyEmail() {
         VerificationMailService.CodeStatus codeStatus = verifyEmail();
+        switch (codeStatus) {
+            case EXPIRED -> {
+                showAlert(Alert.AlertType.ERROR, "This code is expired!");
+            }
+            case FALSE -> {
+                showAlert(Alert.AlertType.ERROR, "This code is false!");
+            }
+            case TRUE -> {
+                return true;
+            }
+        }
+        return true;
+    }
+
+    private void createUser(User newUser) {
         try { 
             //Tạo User mới thành công
-            switch (codeStatus) {
-                case EXPIRED -> {
-                    showAlert(Alert.AlertType.ERROR, "This code is expired!");
-                }
-                case FALSE -> {
-                    showAlert(Alert.AlertType.ERROR, "This code is false!");
-                }
-                case TRUE -> {
-                    userService.create(newUser);
-                    showAlert(Alert.AlertType.INFORMATION, "Successfully create");
-                    Optional<ButtonType> optional = showAlert(Alert.AlertType.CONFIRMATION, "Back to Login");
-                    if(optional.get() == ButtonType.OK) {
-                        //Quay về trang đăng nhập
-                        LoginController.open(stage);
-                    }          
-                }
-            }
+            userService.create(newUser);
+            showAlert(Alert.AlertType.INFORMATION, "Successfully create");
+            Optional<ButtonType> optional = showAlert(Alert.AlertType.CONFIRMATION, "Back to Login");
+            if(optional.get() == ButtonType.OK) {
+                //Quay về trang đăng nhập
+                LoginController.open(stage);
+            }          
         } catch (UserServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }
     
-    protected VerificationMailService.CodeStatus verifyEmail() {
+    /**
+     * Xác thực một Email bằng cách gửi code về địa chỉ được nhập trong field
+     * @return Một {@link VerificationMailService.CodeStatus} miêu tả trạng thái
+     * của Code được nhập vào dialog
+     * @see emailAddressField
+     */
+    private VerificationMailService.CodeStatus verifyEmail() {
         Email toEmail = new Email();
         toEmail.setAddress(emailAddressField.getText());
         toEmail.setName(emailNameField.getText());
-        verificationMailService = new VerificationMailService(new MailjetSevice(), 
-                    new SixNumVerificationCodeService());
         verificationMailService.sendCode(toEmail);
         
         TextInputDialog dialog = new TextInputDialog();
@@ -217,12 +272,15 @@ public class RegisterController extends Controller {
         //Lấy kết quả
         Optional<String> confirm = dialog.showAndWait();
         confirm.ifPresent(inputCode -> {
-            
             verificationMailService.checkCode(inputCode);
         });
         return verificationMailService.getCodeStatus();
     }
     
+    /**
+     * Mở trang register
+     * @param stage Stage chứa trang register này
+     */
     public static void open(Stage stage) {
         try {
             String filePath = Controller.DEFAULT_FXML_RESOURCE + "RegisterView.fxml";
@@ -230,7 +288,7 @@ public class RegisterController extends Controller {
             RegisterController controller = new RegisterController();
 
             controller.setStage(stage);
-            controller.loadFXMLAndSetScene(filePath, controller);
+            controller.loadFXMLAndSetScene(filePath);
             controller.init();
             //Set scene cho stage và show
             

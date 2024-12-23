@@ -1,11 +1,6 @@
 package com.noteapp.controller;
 
-import com.noteapp.user.service.security.VerificationMailService;
-import com.noteapp.note.service.NoteService;
-import com.noteapp.note.service.ShareNoteService;
-import com.noteapp.user.service.UserService;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Optional;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -16,34 +11,29 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 /**
- *
- * @author admin
+ * Class cung cấp các thuộc tính và phương thức chung của các controller
+ * @author Nhóm 17
  */
-public class Controller {
+public abstract class Controller {
     protected double posX, posY;
-    protected UserService userService;
-    protected NoteService noteService;
-    protected ShareNoteService shareNoteService;
-    protected VerificationMailService verificationMailService;
     protected Stage stage;
     protected Scene scene;
     
     public static final String DEFAULT_FXML_RESOURCE = "/com/noteapp/view/";
     
-    public void init() {
-        initServerService();
-    }
-    
-    public void initServerService() {
-        userService = new UserService();
-        noteService = new NoteService();
-        shareNoteService = new ShareNoteService();
-    }
-    
     public void setStage(Stage stage) {
         this.stage = stage;
     }
     
+    /**
+     * Hiển thị một thông báo (Alert)
+     * @param alertType Loại thông báo được hiển thị
+     * @param text Thông điệp muốn hiển thị
+     * @return Một {@link Optional} bao gồm kết quả trả về
+     * @see Alert
+     * @see Optional
+     * @see ButtonType
+     */
     public static Optional<ButtonType> showAlert(Alert.AlertType alertType, String text) {
         Alert alert = new Alert(alertType);
         alert.setTitle(String.valueOf(alertType));
@@ -51,6 +41,9 @@ public class Controller {
         return alert.showAndWait();
     }
     
+    /**
+     * Thiết lập một scene có thể di chuyển trên màn hình
+     */
     public void setSceneMoveable() {
         posX = 0;
         posY = 0;
@@ -63,12 +56,6 @@ public class Controller {
             stage.setY(mouseEvent.getScreenY() - posY);
         });
     }
-    
-    public void setResource(URL fXMLLocation) throws IOException {
-        FXMLLoader loader = new FXMLLoader();
-        loader.setLocation(fXMLLocation);
-        scene = new Scene(loader.load());
-    }
            
     protected void close() {
         Optional<ButtonType> optional = showAlert(Alert.AlertType.CONFIRMATION,
@@ -78,17 +65,33 @@ public class Controller {
         }
     }
     
-    public void loadFXMLAndSetScene(String filePath, Object controller) throws IOException {
-        Parent root = this.loadFXML(filePath, controller);
+    /**
+     * Load một FXML file chứa các thành phần giao diện và thiết lập nó là
+     * scene chính để hiển thị lên màn hình
+     * @param filePath Đường dẫn tới FXML File
+     * @throws IOException Xảy ra khi việc load file bị lỗi
+     * @see FXMLLoader#load()
+     */
+    public void loadFXMLAndSetScene(String filePath) throws IOException {
+        Parent root = this.loadFXML(filePath);
         scene = new Scene(root);
         setSceneMoveable();
         stage.setScene(scene);
     }
     
-    public <T extends Parent> T loadFXML(String filePath, Object controller) throws IOException {
+    /**
+     * Load một FXML file chứa các thành phần giao diện và thiết lập nó là
+     * một đối tượng container có thể hiển thị lên màn hình
+     * @param <T> Một container có thể hiển thị lên màn hình, 
+     * phải là con của {@link Parent}
+     * @param filePath Đường dẫn tới FXML File
+     * @throws IOException Xảy ra khi việc load file bị lỗi
+     * @see FXMLLoader#load()
+     */
+    public <T extends Parent> T loadFXML(String filePath) throws IOException {
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource(filePath));
-        loader.setController(controller);
+        loader.setController(this);
         T root = loader.load();
         return root;
     }

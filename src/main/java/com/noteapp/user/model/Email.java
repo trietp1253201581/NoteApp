@@ -58,7 +58,7 @@ public class Email {
      * có hợp lệ không
      * @return 
      */
-    public boolean checkEmailAddress() {
+    public boolean checkAddress() {
         Pattern emailAddPattern = Pattern.compile(EMAIL_ADDRESS_PATTERN);
         Matcher matcher = emailAddPattern.matcher(this.address);
         return matcher.matches();

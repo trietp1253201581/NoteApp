@@ -9,11 +9,11 @@ FROM users
 WHERE username = ?;
 
 --CREATE
-INSERT INTO users(name, username, password, birthday, school, gender, email)
+INSERT INTO users(name, username, password, birthday, school, gender, email, is_locked)
 VALUES(?, ?, ?, ?, ?, ?, ?);
 
 --UPDATE
-UPDATE users SET name = ?, password = ?, birthday = ?, school = ?, gender = ?, email = ?
+UPDATE users SET name = ?, password = ?, birthday = ?, school = ?, gender = ?, email = ?, is_locked = ?
 WHERE username = ?;
 
 --DELETE

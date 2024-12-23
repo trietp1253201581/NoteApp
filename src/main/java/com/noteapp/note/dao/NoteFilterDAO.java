@@ -2,31 +2,22 @@ package com.noteapp.note.dao;
 
 import com.noteapp.common.dao.FailedExecuteException;
 import com.noteapp.common.dao.DAOException;
-import com.noteapp.common.dbconnection.MySQLDatabaseConnection;
-import com.noteapp.common.dbconnection.SQLDatabaseConnection;
+import com.noteapp.common.dao.connection.MySQLDatabaseConnection;
+import com.noteapp.common.dao.sql.SQLReader;
 import com.noteapp.note.model.NoteFilter;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Triển khai các phương thức thao tác với CSDL NoteFilter
  * @author Nhóm 17
  */
-public class NoteFilterDAO implements INoteFilterDAO {
-    protected SQLDatabaseConnection databaseConnection;
-    protected Map<String, String> enableQueries;
+public class NoteFilterDAO extends AbstractNoteDAO implements INoteFilterDAO {
     
     protected static final String SQL_FILE_DIR = "src/main/java/com/noteapp/note/db/NoteFilterQueries.sql";
-
-    protected static final String DATABASE_HOST = "localhost";  
-    protected static final int DATABASE_PORT = 3306;
-    protected static final String DATABASE_NAME = "notelitedb";
-    protected static final String DATABASE_USERNAME = "root";
-    protected static final String DATABASE_PASSWORD = "Asensio1234@";
 
     protected static enum ColumnName {
         note_id, filter;
@@ -41,13 +32,12 @@ public class NoteFilterDAO implements INoteFilterDAO {
      */
     private NoteFilterDAO() {
         //init connection
-        databaseConnection = new MySQLDatabaseConnection
-            (DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, 
-                    DATABASE_USERNAME, DATABASE_PASSWORD);
-        databaseConnection.connect();
-        //Get enable Queries
-        databaseConnection.readSQL(SQL_FILE_DIR);
-        enableQueries = databaseConnection.getEnableQueries();
+        setDatabaseConnection(new MySQLDatabaseConnection(DATABASE_HOST, DATABASE_PORT, 
+            DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD));
+        initConnection();
+        //get enable query
+        setFileReader(new SQLReader());
+        getEnableQueriesFrom(SQL_FILE_DIR);
     }
 
     private static class SingletonHelper {
@@ -62,31 +52,11 @@ public class NoteFilterDAO implements INoteFilterDAO {
         return SingletonHelper.INSTANCE;
     }
 
-    /**
-     * Lấy và trả về một câu lệnh được chuẩn bị sẵn theo loại truy vấn
-     * @param queriesType loại truy vấn
-     * @return Một {@link PrepareStatement} là môt câu lệnh truy vấn SQL
-     * đã được chuẩn bị sẵn tương ứng với loại truy vấn được yêu cầu
-     * @throws SQLException Nếu kết nối tới CSDL không tồn tại hoặc
-     * xảy ra vấn đề khi tạo câu lệnh
-     * @see java.sql.Connection#prepareStatement(String)
-     */
-    protected PreparedStatement getPrepareStatement(QueriesType queriesType) throws SQLException {
-        //Kiểm tra kết nối
-        if (databaseConnection.getConnection() == null) {
-            throw new SQLException("Connection null!");
-        }
-        
-        //Lấy query và truyền vào connection
-        String query = enableQueries.get(queriesType.toString());
-        return databaseConnection.getConnection().prepareStatement(query);
-    }
-    
     @Override 
     public List<NoteFilter> getAll(int noteId) throws DAOException {    
         try {
             //Thực thi truy vấn SQL và lấy kết quả là một bộ dữ liệu
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL_BY_NOTE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL_BY_NOTE.toString());
             preparedStatement.setInt(1, noteId);
             ResultSet resultSet = preparedStatement.executeQuery();
             //Chuyển từng hàng dữ liệu sang noteFilter và thêm vào list
@@ -107,7 +77,7 @@ public class NoteFilterDAO implements INoteFilterDAO {
     @Override
     public void create(int noteId, NoteFilter newNoteFilter) throws DAOException {
         try {
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.CREATE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.CREATE.toString());
             //Set các tham số cho truy vấn
             preparedStatement.setInt(1, noteId);
             preparedStatement.setString(2, newNoteFilter.getFilter());
@@ -123,7 +93,7 @@ public class NoteFilterDAO implements INoteFilterDAO {
     @Override
     public void deleteAll(int noteId) throws DAOException {
         try {
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.DELETE_ALL);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.DELETE_ALL.toString());
             //Set các tham số cho truy vấn
             preparedStatement.setInt(1, noteId);
 

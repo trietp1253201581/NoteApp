@@ -5,7 +5,7 @@ import com.noteapp.user.model.User;
 import java.util.List;
 
 /**
- * Định nghĩa các hành động có thể thực hiện trên CSDL của Usr 
+ * Định nghĩa các hành động có thể thực hiện trên CSDL của User 
  * @author Nhóm 17
  * @version 1.0
  */

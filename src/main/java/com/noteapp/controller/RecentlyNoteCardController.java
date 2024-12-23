@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.noteapp.controller;
 
 import com.noteapp.note.model.Note;
@@ -9,8 +5,10 @@ import javafx.fxml.FXML;
 import javafx.scene.text.Text;
 
 /**
- *
- * @author admin
+ * Một Controller cho việc hiển thị các note được truy cập gần nhất
+ * lên trang dashboard của User
+ * @author Nhóm 17
+ * @see DashboardController
  */
 public class RecentlyNoteCardController extends Controller {
     @FXML
@@ -22,12 +20,7 @@ public class RecentlyNoteCardController extends Controller {
     
     private Note note;
     
-    @Override
-    public void init() {
-        
-    }
-    
-    public void setData(Note note) {
+    public void setNote(Note note) {
         this.note = note;
         header.setText(note.getHeader());
         lastModifiedDate.setText(note.getLastModifiedDate().toString());

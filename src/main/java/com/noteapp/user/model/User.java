@@ -2,21 +2,19 @@ package com.noteapp.user.model;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.Objects;
 
 /**
  * Một transfer cho dữ liệu của các user 
  * @author Nhóm 17
  * @version 1.0
  */
-public class User {
+public class User extends AbstractUser {
     private String name;
-    private String username;
-    private String password;
     private Date birthday;
     private String school;
     private Gender gender;
     private Email email;
+    private boolean locked;
     
     /**
      * Các giới tính có thể có của User
@@ -33,6 +31,7 @@ public class User {
         this.school = "";
         this.gender = Gender.MALE;
         this.email = new Email();
+        this.locked = false;
     }
 
     public User(String username, String password, Email email) {
@@ -45,7 +44,7 @@ public class User {
         this.gender = Gender.MALE;
     }
 
-    public User(String name, String username, String password, Date birthday, String school, Gender gender, Email email) {
+    public User(String name, String username, String password, Date birthday, String school, Gender gender, Email email, boolean locked) {
         this.name = name;
         this.username = username;
         this.password = password;
@@ -53,6 +52,7 @@ public class User {
         this.school = school;
         this.gender = gender;
         this.email = email;
+        this.locked = locked;
     }
 
     public String getName() {
@@ -61,22 +61,6 @@ public class User {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public Date getBirthday() {
@@ -110,45 +94,15 @@ public class User {
     public void setEmail(Email email) {
         this.email = email;
     }
-    
-    /**
-     * Kiểm tra một {@link User} có mang giá trị mặc định không
-     * @return {@code true} nếu username là một chuỗi rỗng, ngược lại là {@code false}
-     */
-    public boolean isDefaultValue() {
-        return "".equals(username);
+
+    public boolean isLocked() {
+        return locked;
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 19 * hash + Objects.hashCode(this.username);
-        return hash;
+    public void setLocked(boolean locked) {
+        this.locked = locked;
     }
     
-    /**
-     * So sánh một {@link Object} với {@link User} này.
-     * @param obj Object cần so sánh
-     * @return {@code true} nếu obj là một thể hiện của User
-     * và thuộc tính {@code username} của obj bằng với
-     * {@code username} của User, {@code false} nếu ngược lại
-     * @see hashCode()
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (!(obj instanceof User)) {
-            return false;
-        }
-        final User other = (User) obj;
-        return !Objects.equals(this.username, other.username);
-    }
-
     @Override
     public String toString() {
         return "User{" + 
@@ -159,6 +113,7 @@ public class User {
                 ", school=" + school + 
                 ", gender=" + gender + 
                 ", email=" + email + 
+                ", locked=" + locked +
                 '}';
     }
 }

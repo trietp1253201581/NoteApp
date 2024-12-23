@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * Cung cấp các phương thức thao tác với CSDL Note
- * @author admin
+ * @author Nhóm 17
  */
 public interface INoteDAO {
     

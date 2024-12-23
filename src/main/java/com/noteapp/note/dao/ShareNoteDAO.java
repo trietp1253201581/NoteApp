@@ -4,31 +4,22 @@ import com.noteapp.common.dao.DAOKeyException;
 import com.noteapp.common.dao.NotExistDataException;
 import com.noteapp.common.dao.FailedExecuteException;
 import com.noteapp.common.dao.DAOException;
-import com.noteapp.common.dbconnection.MySQLDatabaseConnection;
-import com.noteapp.common.dbconnection.SQLDatabaseConnection;
+import com.noteapp.common.dao.connection.MySQLDatabaseConnection;
+import com.noteapp.common.dao.sql.SQLReader;
 import com.noteapp.note.model.ShareNote;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Triển khai các phương thức thao tác dữ liệu với ShareNote
  * @author Nhóm 17
  */
-public class ShareNoteDAO implements IShareNoteDAO {
-    protected SQLDatabaseConnection databaseConnection;
-    protected Map<String, String> enableQueries;
+public class ShareNoteDAO extends AbstractNoteDAO implements IShareNoteDAO {
     
     protected static final String SQL_FILE_DIR = "src/main/java/com/noteapp/note/db/ShareNoteQueries.sql";
-
-    protected static final String DATABASE_HOST = "localhost";  
-    protected static final int DATABASE_PORT = 3306;
-    protected static final String DATABASE_NAME = "notelitedb";
-    protected static final String DATABASE_USERNAME = "root";
-    protected static final String DATABASE_PASSWORD = "Asensio1234@";
 
     protected static enum ColumnName {
         note_id, editor, share_type; 
@@ -40,13 +31,12 @@ public class ShareNoteDAO implements IShareNoteDAO {
 
     private ShareNoteDAO() {
         //init connection
-        databaseConnection = new MySQLDatabaseConnection
-            (DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, 
-                    DATABASE_USERNAME, DATABASE_PASSWORD);
-        databaseConnection.connect();
-        //Get enable Queries
-        databaseConnection.readSQL(SQL_FILE_DIR);
-        enableQueries = databaseConnection.getEnableQueries();
+        setDatabaseConnection(new MySQLDatabaseConnection(DATABASE_HOST, DATABASE_PORT, 
+            DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD));
+        initConnection();
+        //get enable query
+        setFileReader(new SQLReader());
+        getEnableQueriesFrom(SQL_FILE_DIR);
     }
     
     private static class SingletonHelper {
@@ -61,31 +51,11 @@ public class ShareNoteDAO implements IShareNoteDAO {
         return SingletonHelper.INSTANCE;
     }
     
-    /**
-     * Lấy và trả về một câu lệnh được chuẩn bị sẵn theo loại truy vấn
-     * @param queriesType loại truy vấn
-     * @return Một {@link PrepareStatement} là môt câu lệnh truy vấn SQL
-     * đã được chuẩn bị sẵn tương ứng với loại truy vấn được yêu cầu
-     * @throws SQLException Nếu kết nối tới CSDL không tồn tại hoặc
-     * xảy ra vấn đề khi tạo câu lệnh
-     * @see java.sql.Connection#prepareStatement(String)
-     */
-    protected PreparedStatement getPrepareStatement(QueriesType queriesType) throws SQLException {
-        //Kiểm tra kết nối
-        if (databaseConnection.getConnection() == null) {
-            throw new SQLException("Connection null!");
-        }
-        
-        //Lấy query và truyền vào connection
-        String query = enableQueries.get(queriesType.toString());
-        return databaseConnection.getConnection().prepareStatement(query);
-    }
-
     @Override
     public List<ShareNote> getAll(String editor) throws DAOException {
         try {
             //Set các tham số, thực thi truy vấn và lấy kết quả
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL_BY_EDITOR);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL_BY_EDITOR.toString());
             preparedStatement.setString(1, editor);
             ResultSet resultSet = preparedStatement.executeQuery();
             //Duyệt các hàng kết quả
@@ -114,7 +84,7 @@ public class ShareNoteDAO implements IShareNoteDAO {
 
         try {
             //Set tham số và thực thi truy vấn
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET.toString());
             preparedStatement.setInt(1, noteId);
             preparedStatement.setString(2, editor);
 
@@ -138,7 +108,7 @@ public class ShareNoteDAO implements IShareNoteDAO {
     @Override
     public ShareNote create(ShareNote newShareNote) throws DAOException {
         try {
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.CREATE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.CREATE.toString());
             preparedStatement.setInt(1, newShareNote.getId());
             preparedStatement.setString(2, newShareNote.getEditor());
             preparedStatement.setString(3, newShareNote.getShareType().toString());
@@ -147,7 +117,6 @@ public class ShareNoteDAO implements IShareNoteDAO {
             }
             return newShareNote;
         } catch (SQLException ex) {
-            ex.printStackTrace();
             throw new FailedExecuteException(ex.getCause());
         }
     }
@@ -155,7 +124,7 @@ public class ShareNoteDAO implements IShareNoteDAO {
     @Override
     public void update(ShareNote shareNote) throws DAOException {
         try {
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.UPDATE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.UPDATE.toString());
             preparedStatement.setString(1, shareNote.getShareType().toString());
             preparedStatement.setInt(2, shareNote.getId());
             preparedStatement.setString(3, shareNote.getEditor());
@@ -177,7 +146,7 @@ public class ShareNoteDAO implements IShareNoteDAO {
 
         try {
             //Set tham số và thực thi truy vấn
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.DELETE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.DELETE.toString());
             preparedStatement.setInt(1, noteId);
             preparedStatement.setString(2, editor);
 
@@ -193,7 +162,7 @@ public class ShareNoteDAO implements IShareNoteDAO {
     public void deleteAll(int noteId) throws DAOException {
         try {
             //Set tham số và thực thi truy vấn
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.DELETE_ALL);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.DELETE_ALL.toString());
             preparedStatement.setInt(1, noteId);
 
             if(preparedStatement.executeUpdate() < 0) {

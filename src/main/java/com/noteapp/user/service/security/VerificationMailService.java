@@ -7,9 +7,9 @@ import com.noteapp.user.model.Email;
  * @author Nhóm 17
  */
 public class VerificationMailService {
-    protected MailService mailService;
-    protected VerificationCodeService verificationCodeService;
-    protected CodeStatus codeStatus;
+    private MailService mailService;
+    private VerificationCodeGenerator codeGenerator;
+    private CodeStatus codeStatus;
 
     /**
      * Các trạng thái có thể có của code xác thực
@@ -23,9 +23,17 @@ public class VerificationMailService {
      * @param mailService dịch vụ gửi email nào đó
      * @param verificationCodeService dịch vụ sinh code nào đó
      */
-    public VerificationMailService(MailService mailService, VerificationCodeService verificationCodeService) {
+    public VerificationMailService(MailService mailService, VerificationCodeGenerator codeGenerator) {
         this.mailService = mailService;
-        this.verificationCodeService = verificationCodeService;
+        this.codeGenerator = codeGenerator;
+    }
+
+    public void setMailService(MailService mailService) {
+        this.mailService = mailService;
+    }
+
+    public void setCodeGenerator(VerificationCodeGenerator codeGenerator) {
+        this.codeGenerator = codeGenerator;
     }
     
     /**
@@ -34,8 +42,8 @@ public class VerificationMailService {
      */
     public void sendCode(Email toEmail) {
         String subject = "Verification Code for Note App";
-        verificationCodeService.generateVerificationCode();
-        String verificationCode = verificationCodeService.getVerificationCode();
+        codeGenerator.generateVerificationCode();
+        String verificationCode = codeGenerator.getVerificationCode();
         String content = "Your verification code is " + verificationCode;
         mailService.sendMail(toEmail, subject, content);
     }
@@ -45,9 +53,9 @@ public class VerificationMailService {
      * @param inputCode code người dùng nhập
      */
     public void checkCode(String inputCode) {
-        if(verificationCodeService.isExpiredCode()) {
+        if(codeGenerator.isExpiredCode()) {
             codeStatus = CodeStatus.EXPIRED;
-        } else if (!verificationCodeService.verifyCode(inputCode)) {
+        } else if (!codeGenerator.verifyCode(inputCode)) {
             codeStatus = CodeStatus.FALSE;
         } else {
             codeStatus = CodeStatus.TRUE;

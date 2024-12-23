@@ -5,8 +5,8 @@ import com.noteapp.note.model.NoteFilter;
 import java.util.List;
 
 /**
- *
- * @author admin
+ * Cung cấp các phương thức thao tác với CSDL NoteFilter
+ * @author Nhóm 17
  */
 public interface INoteFilterDAO {
     

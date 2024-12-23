@@ -3,9 +3,9 @@ package com.noteapp.user.dao;
 import com.noteapp.common.dao.NotExistDataException;
 import com.noteapp.common.dao.FailedExecuteException;
 import com.noteapp.common.dao.DAOException;
-import com.noteapp.common.dbconnection.SQLDatabaseConnection;
 import com.noteapp.common.dao.DAOKeyException;
-import com.noteapp.common.dbconnection.MySQLDatabaseConnection;
+import com.noteapp.common.dao.connection.MySQLDatabaseConnection;
+import com.noteapp.common.dao.sql.SQLReader;
 import com.noteapp.user.model.User;
 import com.noteapp.user.model.Email;
 import java.sql.PreparedStatement;
@@ -13,29 +13,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Triển khai các phương thức thao tác dữ liệu với User
  * @author Nhóm 17
  */
-public class UserDAO implements IUserDAO {
-    protected SQLDatabaseConnection databaseConnection;
-    protected Map<String, String> enableQueries;
-    
+public class UserDAO extends AbstractUserDAO implements IUserDAO {
     protected static final String SQL_FILE_DIR = "src/main/java/com/noteapp/user/db/UserQueries.sql";
-
-    protected static final String DATABASE_HOST = "localhost";  
-    protected static final int DATABASE_PORT = 3306;
-    protected static final String DATABASE_NAME = "notelitedb";
-    protected static final String DATABASE_USERNAME = "root";
-    protected static final String DATABASE_PASSWORD = "Asensio1234@";
     
     /**
      * Tên các cột trong CSDL
      */
     protected static enum ColumnName {
-        name, username, password, birthday, school, gender, email;
+        name, username, password, birthday, school, gender, email, is_locked;
     }
     
     /**
@@ -47,13 +37,12 @@ public class UserDAO implements IUserDAO {
 
     private UserDAO() {
         //init connection
-        databaseConnection = new MySQLDatabaseConnection
-            (DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, 
-                    DATABASE_USERNAME, DATABASE_PASSWORD);
-        databaseConnection.connect();
-        //Get enable Queries
-        databaseConnection.readSQL(SQL_FILE_DIR);
-        enableQueries = databaseConnection.getEnableQueries();
+        setDatabaseConnection(new MySQLDatabaseConnection(DATABASE_HOST, DATABASE_PORT, 
+            DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD));
+        initConnection();
+        //get enable query
+        setFileReader(new SQLReader());
+        getEnableQueriesFrom(SQL_FILE_DIR);
     }
     
     private static class SingletonHelper {
@@ -69,29 +58,11 @@ public class UserDAO implements IUserDAO {
         return SingletonHelper.INSTANCE;
     }
     
-    /**
-     * Lấy và trả về một câu lệnh được chuẩn bị sẵn theo loại truy vấn
-     * @param queriesType loại truy vấn
-     * @return Một {@link PrepareStatement} là môt câu lệnh truy vấn SQL
-     * đã được chuẩn bị sẵn tương ứng với loại truy vấn được yêu cầu
-     * @throws SQLException Nếu kết nối tới CSDL không tồn tại
-     */
-    protected PreparedStatement getPrepareStatement(QueriesType queriesType) throws SQLException {
-        //Kiểm tra kết nối
-        if (databaseConnection.getConnection() == null) {
-            throw new SQLException("Connection null!");
-        }
-        
-        //Lấy query và truyền vào connection
-        String query = enableQueries.get(queriesType.toString());
-        return databaseConnection.getConnection().prepareStatement(query);
-    }
-    
     @Override
     public List<User> getAll() throws DAOException {
         try {
             //Thực thi truy vấn SQL và lấy kết quả là một bộ dữ liệu
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL.toString());
             ResultSet resultSet = preparedStatement.executeQuery();
             
             List<User> users = new ArrayList<>();
@@ -108,6 +79,7 @@ public class UserDAO implements IUserDAO {
                 user.setGender(User.Gender.valueOf(resultSet.getString(ColumnName.gender.toString())));
                 email.setAddress(resultSet.getString(ColumnName.email.toString()));
                 user.setEmail(email);
+                user.setLocked(Boolean.parseBoolean(resultSet.getString(ColumnName.is_locked.toString())));
 
                 users.add(user);
             }    
@@ -125,7 +97,7 @@ public class UserDAO implements IUserDAO {
         }
         try {
             //Thực thi truy vấn SQL, gán tham số cho USERNAME và lấy kết quả là một bộ dữ liệu
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET.toString());
             preparedStatement.setString(1, username);
             ResultSet resultSet = preparedStatement.executeQuery();
             //Lấy User
@@ -141,6 +113,7 @@ public class UserDAO implements IUserDAO {
                 user.setGender(User.Gender.valueOf(resultSet.getString(ColumnName.gender.toString())));
                 email.setAddress(resultSet.getString(ColumnName.email.toString()));
                 user.setEmail(email);
+                user.setLocked(Boolean.parseBoolean(resultSet.getString(ColumnName.is_locked.toString())));
             }
             
             //Nếu ko tồn tại thì ném ra ngoại lệ
@@ -157,7 +130,7 @@ public class UserDAO implements IUserDAO {
     @Override
     public User create(User newUser) throws DAOException {
         try {
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.CREATE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.CREATE.toString());
             //Set các tham số cho truy vấn
             preparedStatement.setString(1, newUser.getName());
             preparedStatement.setString(2, newUser.getUsername());
@@ -166,6 +139,7 @@ public class UserDAO implements IUserDAO {
             preparedStatement.setString(5, newUser.getSchool());
             preparedStatement.setString(6, newUser.getGender().toString());
             preparedStatement.setString(7, newUser.getEmail().getAddress());
+            preparedStatement.setString(7, String.valueOf(newUser.isLocked()));
             
             //Nếu không hàng nào được tạo mới thì thông báo lỗi
             if (preparedStatement.executeUpdate() <= 0) {
@@ -181,7 +155,7 @@ public class UserDAO implements IUserDAO {
     @Override
     public void update(User user) throws DAOException {
         try {
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.UPDATE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.UPDATE.toString());
             //Set các tham số cho truy vấn
             preparedStatement.setString(1, user.getName());
             preparedStatement.setString(2, user.getPassword());
@@ -189,7 +163,8 @@ public class UserDAO implements IUserDAO {
             preparedStatement.setString(4, user.getSchool());
             preparedStatement.setString(5, user.getGender().toString());
             preparedStatement.setString(6, user.getEmail().getAddress());
-            preparedStatement.setString(7, user.getUsername());
+            preparedStatement.setString(7, String.valueOf(user.isLocked()));
+            preparedStatement.setString(8, user.getUsername());
             
             //Nếu không hàng nào bị thay đổi thì thông báo lỗi
             if (preparedStatement.executeUpdate() <= 0) {
@@ -207,7 +182,7 @@ public class UserDAO implements IUserDAO {
             throw new DAOKeyException();
         }
         try {
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.DELETE);
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.DELETE.toString());
             //Set các tham số cho truy vấn
             preparedStatement.setString(1, username);
 

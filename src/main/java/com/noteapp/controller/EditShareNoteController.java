@@ -1,6 +1,5 @@
 package com.noteapp.controller;
 
-import static com.noteapp.controller.Controller.showAlert;
 import com.noteapp.note.model.Note;
 import com.noteapp.note.model.NoteBlock;
 import com.noteapp.note.model.ShareNote;
@@ -15,26 +14,32 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
- *
- * @author admin
+ * Controller cho trang edit một note được chia sẻ giữa nhiều người
+ * @author Nhóm 17
  */
 public class EditShareNoteController extends EditNoteController {
-    private Map<String, List<TextBlock>> otherTextBlockByHeaders;
-    private Map<String, List<SurveyBlock>> otherSurveyBlockByHeaders;
+    private Map<Integer, List<TextBlock>> othersTextBlockById;
+    private Map<Integer, List<SurveyBlock>> othersSurveyBlockById;
    
-    protected ShareNote myShareNote;
-    protected Timer updateTimer;
-    protected TimerTask updateTimerTask;
+    private ShareNote myShareNote;
+    private Timer updateTimer;
+    private TimerTask updateTimerTask;
+    
+    private boolean needReload;
     
     public void setMyShareNote(ShareNote myShareNote) {
         this.myShareNote = myShareNote;
@@ -42,15 +47,8 @@ public class EditShareNoteController extends EditNoteController {
     
     @Override
     public void init() {
-        surveyBlockControllers = new ArrayList<>();
+        needReload = false;
         super.init();
-        addSurveyBlockButton.setOnAction((ActionEvent event) -> {
-            SurveyBlock newBlock = new SurveyBlock();
-            newBlock.setOrder(myShareNote.getBlocks().size() + 1);
-            newBlock.setHeader("SurveyBlock " + newBlock.getOrder() + " of " + myNote.getHeader());
-            newBlock.setEditor(myUser.getUsername());
-            addBlock(newBlock);
-        });
     }
     
     @Override 
@@ -64,12 +62,14 @@ public class EditShareNoteController extends EditNoteController {
     @Override
     protected void initBlock() {
         blocksLayout.getChildren().clear();
-        List<NoteBlock> blocks = myNote.getBlocks();
-        Map<String, List<NoteBlock>> otherEditorBlocks = myShareNote.getOtherEditorBlocks();
-        otherTextBlockByHeaders = new HashMap<>();
-        otherSurveyBlockByHeaders = new HashMap<>();
+        textBlockControllers.clear();
+        surveyBlockControllers.clear();
+        List<NoteBlock> blocks = myShareNote.getBlocks();
+        Map<Integer, List<NoteBlock>> otherEditorBlocks = myShareNote.getOtherEditorBlocks();
+        othersTextBlockById = new HashMap<>();
+        othersSurveyBlockById = new HashMap<>();
         
-        getBlocksByHeader(otherEditorBlocks);
+        getBlocksById(otherEditorBlocks);
         
         for(int i=0; i<blocks.size(); i++) {
             if(blocks.get(i).getBlockType() == NoteBlock.BlockType.TEXT) {
@@ -80,6 +80,40 @@ public class EditShareNoteController extends EditNoteController {
         }
     }
     
+    /**
+     * Load lại toàn bộ dữ liệu trên trang edit
+     */
+    protected void reload() {
+        updateTimerTask.cancel();
+        updateTimer.cancel();
+        initBlock();
+        needReload = false;
+        setOnAutoUpdate();
+    }
+    
+    protected void autoUpdate() throws NoteServiceException {
+        if (needReload) {
+            Optional<ButtonType> btnType = showAlert(Alert.AlertType.WARNING, "You need to reload.");
+            reload();
+        }
+        myShareNote = shareNoteService.open(myShareNote.getId(), myShareNote.getEditor());
+        noteHeaderLabel.setText(myShareNote.getHeader());
+        loadFilter(myShareNote.getFilters(), 8);
+        Map<Integer, List<NoteBlock>> otherEditorBlocks = myShareNote.getOtherEditorBlocks();
+        getBlocksById(otherEditorBlocks);
+        updateTextBlock();
+        updateSurveyBlock();
+    }
+    
+    /**
+     * Cài đặt trang edit tự động cập nhật dữ liệu về các block được chỉnh sửa
+     * bởi các user khác. Trong trường hợp thứ tự của các block bị thay đổi, hoặc
+     * header của một block nào đó bị thay đổi, ứng dụng sẽ yêu cầu User reload lại
+     * trang edit này.
+     * @see #reload()
+     * @see #updateTextBlock()
+     * @see #updateSurveyBlock() 
+     */
     public void setOnAutoUpdate() {
         updateTimer = new Timer();
         updateTimerTask = new TimerTask() {
@@ -87,13 +121,8 @@ public class EditShareNoteController extends EditNoteController {
             public void run() {
                 Platform.runLater(() -> {
                     try {
-                        myShareNote = shareNoteService.open(myShareNote.getId(), myShareNote.getEditor());
-                        noteHeaderLabel.setText(myShareNote.getHeader());
-                        loadFilter(myShareNote.getFilters(), 8);
-                        Map<String, List<NoteBlock>> otherEditorBlocks = myShareNote.getOtherEditorBlocks();
-                        getBlocksByHeader(otherEditorBlocks);
-                        updateTextBlock();
-                        updateSurveyBlock();
+                        autoUpdate();
+                        
                     } catch (NoteServiceException ex) {
                         showAlert(Alert.AlertType.WARNING, "Can't update!");
                     }
@@ -107,17 +136,17 @@ public class EditShareNoteController extends EditNoteController {
     protected void addBlock(TextBlock newTextBlock) {
         String filePath = Controller.DEFAULT_FXML_RESOURCE + "TextBlockView.fxml";
         try {
-            String blockHeader = newTextBlock.getHeader();
+            int blockId = newTextBlock.getId();
             TextBlockController controller = new TextBlockController();
             
-            VBox box = controller.loadFXML(filePath, controller);
+            VBox box = controller.loadFXML(filePath);
             controller.init();
             controller.setTextBlock(newTextBlock);
-            if (otherTextBlockByHeaders.containsKey(blockHeader)) {
-                controller.setOtherEditors(otherTextBlockByHeaders.get(blockHeader));
+            if (othersTextBlockById.containsKey(blockId)) {
+                controller.setOtherEditors(othersTextBlockById.get(blockId));
             }
             controller.setNoteId(myNote.getId());
-            controller.setTextForView(newTextBlock.getContent());
+            controller.setText(newTextBlock.getContent());
             controller.setHeader(newTextBlock.getHeader());
             controller.initOtherEditComboBox();
             
@@ -130,13 +159,13 @@ public class EditShareNoteController extends EditNoteController {
             controller.getSwitchToOtherButton().setOnAction((ActionEvent event) -> {
                 String otherEditor = controller.getOtherEditor();
                 TextBlock otherTextBlock = new TextBlock();
-                for (TextBlock block: otherTextBlockByHeaders.get(blockHeader)) {
+                for (TextBlock block: othersTextBlockById.get(blockId)) {
                     if (block.getEditor().equals(otherEditor)) {
                         otherTextBlock = block;
                         break;
                     }
                 }
-                controller.setTextForView(otherTextBlock.getContent());
+                controller.setText(otherTextBlock.getContent());
             });
             controller.getUpButton().setOnAction((ActionEvent event) -> {
                 int order = controller.getTextBlock().getOrder();
@@ -159,11 +188,85 @@ public class EditShareNoteController extends EditNoteController {
                 blocksLayout.getChildren().remove(order);
                 blocksLayout.getChildren().add(order - 1, temp);
             });
+            
+            controller.getBlockHeader().setOnMouseClicked((MouseEvent event) -> {
+                TextInputDialog dialog = new TextInputDialog();
+                dialog.setHeaderText("Input your new header");
+                
+                dialog.showAndWait().ifPresent(newHeader -> {
+                    controller.setHeader(newHeader);
+                    controller.getTextBlock().setHeader(newHeader);
+                });
+                
+            });
              
             blocksLayout.getChildren().add(box);
             textBlockControllers.add(controller);
         } catch (IOException ex) {
-            System.err.println(ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Can't load text block!");
+        }
+    }
+    
+    @Override
+    protected void addBlock(SurveyBlock newSurveyBlock) {
+        String filePath = Controller.DEFAULT_FXML_RESOURCE + "SurveyBlockView.fxml";
+        try {
+            int blockId = newSurveyBlock.getId();
+            SurveyBlockController controller = new SurveyBlockController();
+            
+            VBox box = controller.loadFXML(filePath);
+            controller.init();
+            controller.setSurveyBlock(newSurveyBlock);
+            if (othersSurveyBlockById.containsKey(blockId)) {
+                controller.setOtherEditors(othersSurveyBlockById.get(blockId));
+            }
+            controller.setNoteId(myNote.getId());
+            controller.setHeader(newSurveyBlock.getHeader());
+            controller.loadItems();
+            
+            controller.getDeleteButton().setOnAction((ActionEvent event) -> {
+                int idxToDelete = controller.getSurveyBlock().getOrder()-1;
+                blocksLayout.getChildren().remove(idxToDelete);
+                myNote.getBlocks().remove(idxToDelete);
+                surveyBlockControllers.remove(idxToDelete);
+            });
+            
+            controller.getUpButton().setOnAction((ActionEvent event) -> {
+                int order = controller.getSurveyBlock().getOrder();
+                if (order <= 1) return;
+                swapOrder(order - 1, order);
+                
+                //Swap
+                Node temp = blocksLayout.getChildren().get(order - 1);
+                blocksLayout.getChildren().remove(order - 1);
+                blocksLayout.getChildren().add(order - 2, temp);
+            });
+            
+            controller.getDownButton().setOnAction((ActionEvent event) -> {
+                int order = controller.getSurveyBlock().getOrder();
+                if (order >= blocksLayout.getChildren().size()) return;
+                swapOrder(order, order + 1);
+                
+                //Swap
+                Node temp = blocksLayout.getChildren().get(order);
+                blocksLayout.getChildren().remove(order);
+                blocksLayout.getChildren().add(order - 1, temp);
+            });
+            
+            controller.getBlockHeader().setOnMouseClicked((MouseEvent event) -> {
+                TextInputDialog dialog = new TextInputDialog();
+                dialog.setHeaderText("Input your new header");
+                
+                dialog.showAndWait().ifPresent(newHeader -> {
+                    controller.setHeader(newHeader);
+                    controller.getSurveyBlock().setHeader(newHeader);
+                });
+            });
+            
+            blocksLayout.getChildren().add(box);
+            surveyBlockControllers.add(controller);
+        } catch (IOException ex) {
+            showAlert(Alert.AlertType.ERROR, "Can't load survey block!");
         }
     }
     
@@ -174,7 +277,7 @@ public class EditShareNoteController extends EditNoteController {
         myShareNote.getBlocks().clear();
         for(int i=0; i<textBlockControllers.size(); i++) {
             TextBlock block = textBlockControllers.get(i).getTextBlock();
-            block.setContent(textBlockControllers.get(i).getTextFromView());
+            block.setContent(textBlockControllers.get(i).getText());
             myShareNote.getBlocks().add(block);
         }
         for(int i=0; i<surveyBlockControllers.size(); i++) {
@@ -190,25 +293,32 @@ public class EditShareNoteController extends EditNoteController {
         }
     }
     
-    protected void getBlocksByHeader(Map<String, List<NoteBlock>> otherEditorBlocks) {
-        otherTextBlockByHeaders = new HashMap<>();
-        otherSurveyBlockByHeaders = new HashMap<>();
+    /**
+     * Nhóm lại các block theo dạng text hay survey có cùng Id vào cùng 
+     * một List để dễ dàng lấy các phiên bản
+     * được chỉnh sửa bởi các editor khác của một Block nào đó
+     * @param otherEditorBlocks Một danh sách các Block được chỉnh sửa bởi
+     * các editor khác đã được nhóm theo id
+     */
+    protected void getBlocksById(Map<Integer, List<NoteBlock>> otherEditorBlocks) {
+        othersTextBlockById = new HashMap<>();
+        othersSurveyBlockById = new HashMap<>();
         
-        for(Map.Entry<String, List<NoteBlock>> entry: otherEditorBlocks.entrySet()) {
-            String header = entry.getKey();
+        for(Map.Entry<Integer, List<NoteBlock>> entry: otherEditorBlocks.entrySet()) {
+            int blockId = entry.getKey();
             List<NoteBlock> others = entry.getValue();
             
             for(int i = 0; i < others.size(); i++) {
                 if(others.get(i).getBlockType() == NoteBlock.BlockType.TEXT) {
-                    if (!otherTextBlockByHeaders.containsKey(header)) {
-                        otherTextBlockByHeaders.put(header, new ArrayList<>());
+                    if (!othersTextBlockById.containsKey(blockId)) {
+                        othersTextBlockById.put(blockId, new ArrayList<>());
                     }
-                    otherTextBlockByHeaders.get(header).add((TextBlock) others.get(i));
+                    othersTextBlockById.get(blockId).add((TextBlock) others.get(i));
                 } else {
-                    if (!otherSurveyBlockByHeaders.containsKey(header)) {
-                        otherSurveyBlockByHeaders.put(header, new ArrayList<>());
+                    if (!othersSurveyBlockById.containsKey(blockId)) {
+                        othersSurveyBlockById.put(blockId, new ArrayList<>());
                     }
-                    otherSurveyBlockByHeaders.get(header).add((SurveyBlock) others.get(i));
+                    othersSurveyBlockById.get(blockId).add((SurveyBlock) others.get(i));
                 }
             }
         }
@@ -217,7 +327,17 @@ public class EditShareNoteController extends EditNoteController {
     protected void updateTextBlock() {
         for (int i = 0; i < textBlockControllers.size(); i++) {
             TextBlock thisBlock = textBlockControllers.get(i).getTextBlock();
-            List<TextBlock> otherEditors = otherTextBlockByHeaders.get(thisBlock.getHeader());
+            List<TextBlock> otherEditors = othersTextBlockById.get(thisBlock.getId());
+            for (TextBlock otherEditor: otherEditors) {
+                if (!otherEditor.getHeader().equals(thisBlock.getHeader())) {
+                    needReload = true;
+                    break;
+                } 
+                if (otherEditor.getOrder() != thisBlock.getOrder()) {
+                    needReload = true;
+                    break;
+                }
+            }
 
             textBlockControllers.get(i).updateOtherEditors(otherEditors);
             textBlockControllers.get(i).initOtherEditComboBox();
@@ -227,41 +347,19 @@ public class EditShareNoteController extends EditNoteController {
     protected void updateSurveyBlock() {
         for (int i = 0; i < surveyBlockControllers.size(); i++) {
             SurveyBlock thisBlock = surveyBlockControllers.get(i).getSurveyBlock();
-            List<SurveyBlock> otherEditors = otherSurveyBlockByHeaders.get(thisBlock.getHeader());
-
+            List<SurveyBlock> otherEditors = othersSurveyBlockById.get(thisBlock.getId());
+            for (SurveyBlock otherEditor: otherEditors) {
+                if (!otherEditor.getHeader().equals(thisBlock.getHeader())) {
+                    needReload = true;
+                    break;
+                } 
+                if (otherEditor.getOrder() != thisBlock.getOrder()) {
+                    needReload = true;
+                    break;
+                }
+            }
             surveyBlockControllers.get(i).setOtherEditors(otherEditors);
             surveyBlockControllers.get(i).loadItems();
-        }
-    }
-    
-    @Override
-    protected void addBlock(SurveyBlock newSurveyBlock) {
-        String filePath = Controller.DEFAULT_FXML_RESOURCE + "SurveyBlockView.fxml";
-        try {
-            String blockHeader = newSurveyBlock.getHeader();
-            SurveyBlockController controller = new SurveyBlockController();
-            
-            VBox box = controller.loadFXML(filePath, controller);
-            controller.init();
-            controller.setSurveyBlock(newSurveyBlock);
-            if (otherSurveyBlockByHeaders.containsKey(blockHeader)) {
-                controller.setOtherEditors(otherSurveyBlockByHeaders.get(blockHeader));
-            }
-            controller.setNoteId(myNote.getId());
-            controller.setHeader(newSurveyBlock.getHeader());
-            controller.loadItems();
-            
-            controller.getDeleteButton().setOnAction((ActionEvent event) -> {
-                int idxToDelete = controller.getSurveyBlock().getOrder()-1;
-                blocksLayout.getChildren().remove(idxToDelete);
-                myNote.getBlocks().remove(idxToDelete);
-                surveyBlockControllers.remove(idxToDelete);
-            });
-             
-            blocksLayout.getChildren().add(box);
-            surveyBlockControllers.add(controller);
-        } catch (IOException ex) {
-            System.err.println(ex.getMessage());
         }
     }
     
@@ -279,36 +377,22 @@ public class EditShareNoteController extends EditNoteController {
         return new NoteBlock();
     }
     
-    protected void swapOrder(int firstOrder, int secondOrder) {
-        for (TextBlockController controller: textBlockControllers) {
-            if (controller.getTextBlock().getOrder() == firstOrder) {
-                controller.getTextBlock().setOrder(secondOrder);
-            } else if (controller.getTextBlock().getOrder() == secondOrder) {
-                controller.getTextBlock().setOrder(firstOrder);
-            }
-        }
-        
-        for (SurveyBlockController controller: surveyBlockControllers) {
-            if (controller.getSurveyBlock().getOrder() == firstOrder) {
-                controller.getSurveyBlock().setOrder(secondOrder);
-            } else if (controller.getSurveyBlock().getOrder() == secondOrder) {
-                controller.getSurveyBlock().setOrder(firstOrder);
-            }
-        }
-    }
-    
+    /**
+     * Mở một trang edit cho một note được chia sẻ giữa nhiều người
+     * @param myUser User đang trong phiên đăng nhập
+     * @param myShareNote Một Note được mở và được chia sẻ tới User này
+     * @param stage Stage chứa trang edit này
+     */
     public static void open(User myUser, ShareNote myShareNote, Stage stage) {
         try {
             String filePath = Controller.DEFAULT_FXML_RESOURCE + "EditNoteView.fxml";
-            
             EditShareNoteController controller = new EditShareNoteController();
-
             controller.setStage(stage);
             controller.setMyUser(myUser);
             controller.setMyNote(myShareNote);
             controller.setMyShareNote(myShareNote);
             controller.setOpenedNotes(new ArrayList<>());
-            controller.loadFXMLAndSetScene(filePath, controller);
+            controller.loadFXMLAndSetScene(filePath);
             controller.init();
             controller.setOnAutoUpdate();
             //Set scene cho stage và show
@@ -319,10 +403,16 @@ public class EditShareNoteController extends EditNoteController {
         }
     }
     
+    /**
+     * Mở một trang edit cho một note được chia sẻ giữa nhiều người
+     * @param myUser User đang trong phiên đăng nhập
+     * @param myShareNote Một Note được mở và được chia sẻ tới User này
+     * @param openedNotes Các Note đang được mở hiện tại
+     * @param stage Stage chứa trang edit này
+     */
     public static void open(User myUser, ShareNote myShareNote, List<Note> openedNotes, Stage stage) {
         try {
-            String filePath = Controller.DEFAULT_FXML_RESOURCE + "EditNoteView.fxml";
-            
+            String filePath = Controller.DEFAULT_FXML_RESOURCE + "EditNoteView.fxml";        
             EditShareNoteController controller = new EditShareNoteController();
 
             controller.setStage(stage);
@@ -330,8 +420,9 @@ public class EditShareNoteController extends EditNoteController {
             controller.setMyNote(myShareNote);
             controller.setMyShareNote(myShareNote);
             controller.setOpenedNotes(openedNotes);
-            controller.loadFXMLAndSetScene(filePath, controller);
+            controller.loadFXMLAndSetScene(filePath);
             controller.init();
+            controller.setOnAutoUpdate();
             //Set scene cho stage và show
             
             controller.showFXML();

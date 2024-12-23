@@ -1,8 +1,11 @@
 package com.noteapp.controller;
 
+import com.noteapp.user.dao.UserDAO;
 import com.noteapp.user.model.Email;
+import com.noteapp.user.service.IUserService;
+import com.noteapp.user.service.UserService;
 import com.noteapp.user.service.security.MailjetSevice;
-import com.noteapp.user.service.security.SixNumVerificationCodeService;
+import com.noteapp.user.service.security.SixNumCodeGenerator;
 import com.noteapp.user.service.security.VerificationMailService;
 import com.noteapp.user.service.UserServiceException;
 import java.io.IOException;
@@ -13,9 +16,14 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
-public class ResetPasswordController extends Controller {
+/**
+ * Một Controller cho trang cấp lại mật khẩu mới
+ * @author Nhóm 17
+ */
+public class ResetPasswordController extends InitableController {
     @FXML
     private Button closeButton;
     @FXML
@@ -32,10 +40,15 @@ public class ResetPasswordController extends Controller {
     private TextField verificationCodeField;
     @FXML
     private Button verifyCodeButton;
+    @FXML
+    private Label backLoginLabel;
 
+    protected IUserService userService;
+    protected VerificationMailService verificationMailService;
+    
     @Override
     public void init() {
-        initServerService();
+        userService = new UserService(UserDAO.getInstance());
         initScene();
         closeButton.setOnAction((ActionEvent event) -> {
             close();
@@ -49,6 +62,9 @@ public class ResetPasswordController extends Controller {
         confirmPasswordButton.setOnAction((ActionEvent event) -> {
             resetPassword();
         }); 
+        backLoginLabel.setOnMouseClicked((MouseEvent event) -> {
+            LoginController.open(stage);
+        });
     }
     
     protected void initScene() {
@@ -57,6 +73,10 @@ public class ResetPasswordController extends Controller {
         passwordField.setEditable(false);
     }
     
+    /**
+     * Gửi một verify code tới email của User có username được nhập vào field,
+     * nếu user tồn tại và đã gửi email thì mở khóa field để nhập code
+     */
     protected void sendCode() {
         String username = usernameField.getText();
         if("".equals(username)) {
@@ -69,7 +89,7 @@ public class ResetPasswordController extends Controller {
             Email vefiryEmail = userService.getVerificationEmail(username);
             verificationMailService = new VerificationMailService(
                     new MailjetSevice(),
-                    new SixNumVerificationCodeService()
+                    new SixNumCodeGenerator()
             );
             verificationMailService.sendCode(vefiryEmail);
             verificationCodeField.setEditable(true);
@@ -78,6 +98,10 @@ public class ResetPasswordController extends Controller {
         }
     }
     
+    /**
+     * Kiểm tra code xác thực được nhập vào từ người dùng.
+     * Nếu code đúng thì mở khóa field để nhập password mới
+     */
     protected void checkVerifyCode() {
         if(verificationMailService == null) {
             return;
@@ -124,13 +148,12 @@ public class ResetPasswordController extends Controller {
             ResetPasswordController controller = new ResetPasswordController();
 
             controller.setStage(stage);
-            controller.loadFXMLAndSetScene(filePath, controller);
+            controller.loadFXMLAndSetScene(filePath);
             controller.init();
             //Set scene cho stage và show
             
             controller.showFXML();
         } catch (IOException ex) {
-            ex.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Can't open reset Password");
         }
     }

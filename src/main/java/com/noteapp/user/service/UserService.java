@@ -3,7 +3,6 @@ package com.noteapp.user.service;
 import com.noteapp.common.dao.DAOException;
 import com.noteapp.common.dao.NotExistDataException;
 import com.noteapp.user.dao.IUserDAO;
-import com.noteapp.user.dao.UserDAO;
 import com.noteapp.user.model.Email;
 import com.noteapp.user.model.User;
 
@@ -13,32 +12,39 @@ import com.noteapp.user.model.User;
  * @see IUserDAO
  * @see User
  */
-public class UserService {
+public class UserService implements IUserService {
     protected IUserDAO userDAO;
+    
+    public UserService(IUserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
 
-    public UserService() {
-        
+    public void setUserDAO(IUserDAO userDAO) {
+        this.userDAO = userDAO;
     }
     
-    /**
-     * Lấy các thể hiện của DAO, dùng để truy cập và kết nối tới CSDL
-     */
-    protected void getInstanceOfDAO() {
-        userDAO = UserDAO.getInstance();
+    private void checkNullDAO() throws UserServiceException {
+        if (userDAO == null) {
+            throw new UserServiceException("DAO is null!");
+        }
     }
     
-    /**
-     * Tạo một {@link User} mới và lưu và CSDL, đồng thời trả lại User vừa tạo
-     * @param newUser User cần tạo
-     * @return User được tạo thành công.
-     * @throws UserServiceException Xảy ra khi (1) User đã tồn tại,
-     * (2) Các câu lệnh không thể thực hiện do kết nối tới CSDL
-     * @see IUserDAO#get(String) 
-     * @see IUserDAO#create(User) 
-     * @see com.noteapp.common.dao.FailedExecuteException
-     */
+    @Override
+    public boolean isUser(String username) throws UserServiceException {
+        checkNullDAO();
+        try {
+            userDAO.get(username);
+            return true;
+        } catch (NotExistDataException ex1) {
+            return false;
+        } catch (DAOException ex2) {
+            throw new UserServiceException(ex2.getMessage(), ex2.getCause());
+        }
+    }
+    
+    @Override
     public User create(User newUser) throws UserServiceException {
-        getInstanceOfDAO();
+        checkNullDAO();
         String username = newUser.getUsername();
         //Kiểm tra đã tồn tại user hay chưa
         try {
@@ -57,18 +63,9 @@ public class UserService {
         }
     }
     
-    /**
-     * Kiểm tra tài khoản và mật khẩu để đăng nhập
-     * @param username username được nhập
-     * @param password password được nhập
-     * @return Các thông tin của User nếu tài khoản và mật khẩu đúng
-     * @throws UserServiceException Xảy ra khi (1) User không tồn tại, 
-     * (2) password sai, (3) Việc thực thi các câu lệnh lỗi
-     * @see IUserDAO#get(String) 
-     * @see com.noteapp.common.dao.DAOException
-     */
-    public User checkPassword(String username, String password) throws UserServiceException {
-        getInstanceOfDAO();
+    @Override
+    public User checkUser(String username, String password) throws UserServiceException {
+        checkNullDAO();
         try {
             //Lấy tài khoản
             User user = userDAO.get(username);
@@ -83,18 +80,22 @@ public class UserService {
         }
     }
     
-    /**
-     * Cập nhật mật khẩu của User
-     * @param username username của user
-     * @param newPassword password mới của user
-     * @throws UserServiceException Xảy ra khi (1) User không tồn tại,
-     * (2) Các câu lệnh bị lỗi
-     * @see IUserDAO#get(String)
-     * @see IUserDAO#update(User) 
-     * @see com.noteapp.common.dao.DAOException
-     */
+    @Override
+    public boolean checkLocked(String username) throws UserServiceException {
+        checkNullDAO();
+        try {
+            //Lấy tài khoản
+            User user = userDAO.get(username);
+            //Kiểm tra mật khẩu
+            return user.isLocked();
+        } catch (DAOException exByGet) {
+            throw new UserServiceException(exByGet.getMessage(), exByGet.getCause());
+        }
+    }
+    
+    @Override
     public void updatePassword(String username, String newPassword) throws UserServiceException {
-        getInstanceOfDAO();
+        checkNullDAO();
         try {
             User user = userDAO.get(username);
             user.setPassword(newPassword);
@@ -104,34 +105,20 @@ public class UserService {
         }
     }
     
-    /**
-     * Cập nhật các thông tin của user
-     * @param user User cần cập nhật
-     * @return User sau khi cập nhật
-     * @throws UserServiceException Xảy ra khi câu lệnh hoặc kết nối bị lỗi
-     * @see IUserDAO#update(User)
-     * @see com.noteapp.common.dao.DAOException
-     */
+    @Override
     public User update(User user) throws UserServiceException {
-        getInstanceOfDAO();
+        checkNullDAO();
         try {
             userDAO.update(user);
             return user;
         } catch (DAOException exByUpdate) {
             throw new UserServiceException(exByUpdate.getMessage());
         }
-    }
+    } 
     
-    /**
-     * Lấy địa chỉ email xác thực của User
-     * @param username username của User cần lấy
-     * @return Một {@link Email} chứa địa chỉ email xác thực của User
-     * @throws UserServiceException Xảy ra khi không thể lấy dữ liệu của User
-     * @see IUserDAO#get(String)
-     * @see com.noteapp.common.dao.DAOException
-     */
+    @Override
     public Email getVerificationEmail(String username) throws UserServiceException {
-        getInstanceOfDAO();
+        checkNullDAO();
         try { 
             User user = userDAO.get(username);
             return user.getEmail();
