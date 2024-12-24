@@ -3,7 +3,6 @@ com\noteapp\user\dao\IUserDAO.class
 com\noteapp\controller\RegisterController.class
 com\noteapp\user\service\security\MailjetSevice.class
 com\noteapp\note\model\NoteBlock$BlockType.class
-com\noteapp\user\service\UserServiceException.class
 com\noteapp\user\dao\AdminDAO.class
 com\noteapp\common\dao\sql\ISQLReader.class
 com\noteapp\note\model\ShareNote.class
@@ -14,6 +13,7 @@ com\noteapp\user\dao\UserDAO$QueriesType.class
 com\noteapp\controller\OpenedNoteCardController.class
 com\noteapp\controller\LoginController.class
 com\noteapp\note\dao\NoteFilterDAO.class
+com\noteapp\note\service\io\PdfImportService.class
 com\noteapp\note\service\ShareNoteService.class
 com\noteapp\controller\EditShareNoteController.class
 com\noteapp\user\dao\IAdminDAO.class
@@ -25,12 +25,14 @@ com\noteapp\user\dao\UserDAO$SingletonHelper.class
 com\noteapp\common\dao\NotExistDataException.class
 com\noteapp\note\dao\TextBlockDAO$QueriesType.class
 com\noteapp\controller\RegisterController$1.class
+com\noteapp\common\service\NoteAppServiceException.class
 com\noteapp\note\dao\INoteBlockDAO.class
 com\noteapp\note\dao\NoteDAO$SingletonHelper.class
 com\noteapp\note\service\INoteService.class
 com\noteapp\common\dao\FailedExecuteException.class
 com\noteapp\controller\ResetPasswordController$1.class
 com\noteapp\user\service\AdminService.class
+com\noteapp\controller\Initable.class
 com\noteapp\NoteApp.class
 module-info.class
 com\noteapp\note\dao\SurveyBlockDAO$SingletonHelper.class
@@ -42,7 +44,9 @@ com\noteapp\note\dao\ShareNoteDAO$SingletonHelper.class
 com\noteapp\note\dao\NoteFilterDAO$SingletonHelper.class
 com\noteapp\user\dao\UserDAO$ColumnName.class
 com\noteapp\user\service\security\VerificationMailService.class
+com\noteapp\controller\RequestServiceController.class
 com\noteapp\note\model\TextBlock.class
+com\noteapp\common\service\CausedBySystemException.class
 com\noteapp\controller\AdminDashboardController.class
 com\noteapp\note\dao\IShareNoteDAO.class
 com\noteapp\note\dao\AbstractNoteDAO.class
@@ -59,10 +63,12 @@ com\noteapp\controller\InitableController.class
 com\noteapp\user\dao\AdminDAO$ColumnName.class
 com\noteapp\note\model\SurveyBlock.class
 com\noteapp\user\service\IAdminService.class
+com\noteapp\note\service\io\FileIOService.class
 com\noteapp\note\service\IShareNoteService.class
 com\noteapp\note\dao\INoteDAO.class
 com\noteapp\note\dao\SurveyBlockDAO.class
 com\noteapp\note\dao\INoteFilterDAO.class
+com\noteapp\note\service\io\PdfIOService.class
 com\noteapp\note\dao\NoteDAO$QueriesType.class
 com\noteapp\note\dao\ShareNoteDAO$QueriesType.class
 com\noteapp\note\dao\TextBlockDAO$ColumnName.class
@@ -71,10 +77,11 @@ com\noteapp\controller\SurveyBlockController.class
 com\noteapp\note\dao\NoteBlockDAO$QueriesType.class
 com\noteapp\user\dao\AdminDAO$QueriesType.class
 com\noteapp\note\model\Note.class
+com\noteapp\common\service\CausedByUserException.class
 com\noteapp\common\dao\connection\MySQLDatabaseConnection.class
 com\noteapp\note\dao\ShareNoteDAO$ColumnName.class
 com\noteapp\note\dao\SurveyBlockDAO$QueriesType.class
-com\noteapp\note\service\NoteServiceException.class
+com\noteapp\note\service\io\PdfExportService.class
 com\noteapp\controller\ResetPasswordController.class
 com\noteapp\user\service\IUserService.class
 com\noteapp\note\service\NoteService.class
@@ -98,6 +105,7 @@ com\noteapp\note\dao\NoteBlockDAO$ColumnName.class
 com\noteapp\controller\EditNoteController.class
 com\noteapp\note\dao\NoteBlockDAO$SingletonHelper.class
 com\noteapp\user\dao\AdminDAO$SingletonHelper.class
+com\noteapp\common\service\NoteAppService.class
 com\noteapp\note\dao\ShareNoteDAO.class
 com\noteapp\controller\NoteCardController.class
 com\noteapp\user\service\security\MailService.class

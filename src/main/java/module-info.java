@@ -6,6 +6,7 @@ module com.noteapp {
     requires com.mailjet.api;
     requires org.json;
     requires okhttp3;
+    requires itextpdf;
     
     opens com.noteapp to javafx.fxml;
     exports com.noteapp;
@@ -15,6 +16,7 @@ module com.noteapp {
     
     exports com.noteapp.common.dao;
     exports com.noteapp.common.dao.connection;
+    exports com.noteapp.common.dao.sql;
     exports com.noteapp.user.model;
     exports com.noteapp.user.dao;
     exports com.noteapp.user.service;

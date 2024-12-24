@@ -1,13 +1,13 @@
 package com.noteapp.controller;
 
+import com.noteapp.common.service.NoteAppService;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.user.dao.UserDAO;
 import com.noteapp.user.model.Email;
-import com.noteapp.user.service.IUserService;
 import com.noteapp.user.service.UserService;
 import com.noteapp.user.service.security.MailjetSevice;
 import com.noteapp.user.service.security.SixNumCodeGenerator;
 import com.noteapp.user.service.security.VerificationMailService;
-import com.noteapp.user.service.UserServiceException;
 import java.io.IOException;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -23,7 +23,7 @@ import javafx.stage.Stage;
  * Một Controller cho trang cấp lại mật khẩu mới
  * @author Nhóm 17
  */
-public class ResetPasswordController extends InitableController {
+public class ResetPasswordController extends RequestServiceController implements Initable {
     @FXML
     private Button closeButton;
     @FXML
@@ -42,13 +42,11 @@ public class ResetPasswordController extends InitableController {
     private Button verifyCodeButton;
     @FXML
     private Label backLoginLabel;
-
-    protected IUserService userService;
-    protected VerificationMailService verificationMailService;
     
     @Override
     public void init() {
-        userService = new UserService(UserDAO.getInstance());
+        noteAppService = new NoteAppService();
+        noteAppService.setUserService(new UserService(UserDAO.getInstance()));
         initScene();
         closeButton.setOnAction((ActionEvent event) -> {
             close();
@@ -86,14 +84,12 @@ public class ResetPasswordController extends InitableController {
             errorUsernameFieldLabel.setVisible(false);
         }
         try {
-            Email vefiryEmail = userService.getVerificationEmail(username);
-            verificationMailService = new VerificationMailService(
-                    new MailjetSevice(),
-                    new SixNumCodeGenerator()
-            );
-            verificationMailService.sendCode(vefiryEmail);
+            Email vefiryEmail = noteAppService.getUserService().getVerificationEmail(username);
+            noteAppService.setVerificationMailService(new VerificationMailService(new MailjetSevice(), 
+                    new SixNumCodeGenerator()));
+            noteAppService.getVerificationMailService().sendCode(vefiryEmail);
             verificationCodeField.setEditable(true);
-        } catch (UserServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }
@@ -103,16 +99,14 @@ public class ResetPasswordController extends InitableController {
      * Nếu code đúng thì mở khóa field để nhập password mới
      */
     protected void checkVerifyCode() {
-        if(verificationMailService == null) {
-            return;
-        }
         if(!verificationCodeField.isEditable()) {
             return;
         }
-        String inputCode = verificationCodeField.getText();
-        verificationMailService.checkCode(inputCode);
-        VerificationMailService.CodeStatus codeStatus = verificationMailService.getCodeStatus();
-        switch (codeStatus) {
+        try {
+            String inputCode = verificationCodeField.getText();
+            noteAppService.getVerificationMailService().checkCode(inputCode);
+            VerificationMailService.CodeStatus codeStatus = noteAppService.getVerificationMailService().getCodeStatus();
+            switch (codeStatus) {
                 case EXPIRED -> {
                     showAlert(Alert.AlertType.ERROR, "This code is expired!");
                 }
@@ -124,6 +118,9 @@ public class ResetPasswordController extends InitableController {
                     passwordField.setEditable(true);
                 }
             }
+        } catch (NoteAppServiceException ex) {
+            showAlert(Alert.AlertType.ERROR, ex.getMessage());
+        }
     }
     
     protected void resetPassword() {
@@ -132,11 +129,11 @@ public class ResetPasswordController extends InitableController {
         }
         String username = usernameField.getText();
         try {
-            userService.updatePassword(username, passwordField.getText());
+            noteAppService.getUserService().updatePassword(username, passwordField.getText());
             initScene();
             showAlert(Alert.AlertType.INFORMATION, "Successfully reset.");
             LoginController.open(stage);
-        } catch (UserServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }

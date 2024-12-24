@@ -1,5 +1,7 @@
 package com.noteapp.controller;
 
+import com.noteapp.common.service.NoteAppService;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.note.dao.NoteBlockDAO;
 import com.noteapp.note.dao.NoteDAO;
 import com.noteapp.note.dao.NoteFilterDAO;
@@ -12,16 +14,13 @@ import com.noteapp.note.model.NoteFilter;
 import com.noteapp.note.model.ShareNote;
 import com.noteapp.note.model.SurveyBlock;
 import com.noteapp.note.model.TextBlock;
-import com.noteapp.note.service.INoteService;
-import com.noteapp.note.service.IShareNoteService;
 import com.noteapp.note.service.NoteService;
 import com.noteapp.user.model.User;
-import com.noteapp.note.service.NoteServiceException;
 import com.noteapp.note.service.ShareNoteService;
+import com.noteapp.note.service.io.PdfIOService;
 import com.noteapp.user.dao.UserDAO;
-import com.noteapp.user.service.IUserService;
 import com.noteapp.user.service.UserService;
-import com.noteapp.user.service.UserServiceException;
+import java.io.File;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -43,6 +42,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 
@@ -50,7 +51,7 @@ import javafx.stage.Stage;
  * FXML Controller class cho trang Edit Note
  * @author Nhóm 17
  */
-public class EditNoteController extends InitableController {
+public class EditNoteController extends RequestServiceController implements Initable {
     //Các thuộc tính chung
     @FXML 
     protected Label noteHeaderLabel;
@@ -73,6 +74,10 @@ public class EditNoteController extends InitableController {
     protected Button addSurveyBlockButton;
     @FXML
     protected Button shareButton;
+    @FXML
+    protected Button importFileButton;
+    @FXML
+    protected Button exportFileButton;
     //Các thuộc tính còn lại
     @FXML
     protected VBox blocksLayout;
@@ -88,9 +93,6 @@ public class EditNoteController extends InitableController {
     protected List<TextBlockController> textBlockControllers;
     protected List<SurveyBlockController> surveyBlockControllers;
     protected List<Note> openedNotes;
-    protected INoteService noteService;
-    protected IShareNoteService shareNoteService;
-    protected IUserService userService;
 
     public void setMyUser(User myUser) {
         this.myUser = myUser;
@@ -106,12 +108,14 @@ public class EditNoteController extends InitableController {
     
     @Override
     public void init() {
-        noteService = new NoteService(NoteDAO.getInstance(), NoteFilterDAO.getInstance(), 
-                NoteBlockDAO.getInstance(), TextBlockDAO.getInstance(), SurveyBlockDAO.getInstance());
-        shareNoteService = new ShareNoteService(ShareNoteDAO.getInstance(),  
+        noteAppService = new NoteAppService();
+        noteAppService.setUserService(new UserService(UserDAO.getInstance()));
+        noteAppService.setNoteService(new NoteService(NoteDAO.getInstance(), NoteFilterDAO.getInstance(), 
+                NoteBlockDAO.getInstance(), TextBlockDAO.getInstance(), SurveyBlockDAO.getInstance()));
+        noteAppService.setShareNoteService(new ShareNoteService(ShareNoteDAO.getInstance(),  
                 NoteDAO.getInstance(), NoteFilterDAO.getInstance(), 
-                NoteBlockDAO.getInstance(), TextBlockDAO.getInstance(), SurveyBlockDAO.getInstance());
-        userService = new UserService(UserDAO.getInstance());
+                NoteBlockDAO.getInstance(), TextBlockDAO.getInstance(), SurveyBlockDAO.getInstance()));
+        noteAppService.setFileIOService(new PdfIOService());
         textBlockControllers = new ArrayList<>();
         surveyBlockControllers = new ArrayList<>();
         initView();
@@ -129,6 +133,12 @@ public class EditNoteController extends InitableController {
         });
         addFilterButton.setOnAction((ActionEvent event) -> {
             addFilter();
+        });
+        importFileButton.setOnAction((ActionEvent event) -> {
+            importFile();
+        });
+        exportFileButton.setOnAction((ActionEvent event) -> {
+            exportFile();
         });
         addTextBlockButton.setOnAction((ActionEvent event) -> {
             TextBlock newBlock = new TextBlock();
@@ -162,9 +172,9 @@ public class EditNoteController extends InitableController {
     private void openNote(Note needOpenNote) {
         if (needOpenNote.isPubliced()) {
             try {
-                ShareNote needOpenShareNote = shareNoteService.open(needOpenNote.getId(), myUser.getUsername());
+                ShareNote needOpenShareNote = noteAppService.getShareNoteService().open(needOpenNote.getId(), myUser.getUsername());
                 EditShareNoteController.open(myUser, needOpenShareNote, openedNotes, stage);
-            } catch (NoteServiceException e) {
+            } catch (NoteAppServiceException e) {
             }
         } else {
             EditNoteController.open(myUser, needOpenNote, openedNotes, stage);
@@ -236,14 +246,14 @@ public class EditNoteController extends InitableController {
     
     private boolean checkExistHeader(String newNoteHeader) {
         try { 
-            List<Note> myNotes = noteService.getAll(myUser.getUsername());
+            List<Note> myNotes = noteAppService.getNoteService().getAll(myUser.getUsername());
             for(Note note: myNotes) {
                 if(note.getHeader().equals(newNoteHeader)) {
                     showAlert(Alert.AlertType.ERROR, "This header exist");
                     return true;
                 }
             }
-        } catch (NoteServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
         return false;
@@ -282,9 +292,9 @@ public class EditNoteController extends InitableController {
         }
         System.out.println(myNote);
         try {
-            noteService.save(myNote);
+            noteAppService.getNoteService().save(myNote);
             showAlert(Alert.AlertType.INFORMATION, "Successfully save for " + myNote.getHeader());
-        } catch (NoteServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }
@@ -298,13 +308,16 @@ public class EditNoteController extends InitableController {
     protected void shareMyNote() {
         Dialog<List<String>> dialog = new Dialog<>();
         dialog.setTitle("Share your note");
+        dialog.setWidth(400);
         
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         TextField receiverField = new TextField();
+        receiverField.setPrefWidth(350);
         receiverField.setPromptText("Input username of receiver!");
         
         ComboBox<String> shareTypeComboBox = new ComboBox<>();
         shareTypeComboBox.getItems().addAll("Read only", "Can edit");
+        shareTypeComboBox.setPrefWidth(350);
         
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10);
@@ -333,8 +346,9 @@ public class EditNoteController extends InitableController {
             String receiver = result.get(0);
             boolean isExistReceiver = false;
             try {
-                isExistReceiver = userService.isUser(receiver);
-            } catch (UserServiceException ex) {               
+                isExistReceiver = noteAppService.getUserService().isUser(receiver);
+            } catch (NoteAppServiceException ex) {    
+                showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }
             if (!isExistReceiver) {
                 showAlert(Alert.AlertType.ERROR, "Receiver is not exist!");
@@ -342,18 +356,19 @@ public class EditNoteController extends InitableController {
             }
             boolean isLocked = false;
             try {
-                isLocked = userService.checkLocked(receiver);
-            } catch (UserServiceException ex) {
+                isLocked = noteAppService.getUserService().checkLocked(receiver);
+            } catch (NoteAppServiceException ex) {
+                showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }
             if (isLocked) {
                 showAlert(Alert.AlertType.ERROR, "Your account is locked!");
             }
             try {
-                shareNoteService.share(myNote, receiver, shareType);
+                noteAppService.getShareNoteService().share(myNote, receiver, shareType);
                 showAlert(Alert.AlertType.INFORMATION, "Successfully share!");
-                ShareNote shareNote = shareNoteService.open(myNote.getId(), myUser.getUsername());
+                ShareNote shareNote = noteAppService.getShareNoteService().open(myNote.getId(), myUser.getUsername());
                 EditShareNoteController.open(myUser, shareNote, stage);
-            } catch (NoteServiceException ex) {
+            } catch (NoteAppServiceException ex) {
                 showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }
         });
@@ -561,6 +576,43 @@ public class EditNoteController extends InitableController {
                 controller.getSurveyBlock().setOrder(firstOrder);
             }
         }
+    }
+    
+    protected void importFile() {
+        //Tạo directory chooser
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose dir to export file");
+        File file = fileChooser.showOpenDialog(stage);
+        if (file == null) {
+            return;
+        }
+
+        try {
+            Note importedNote = noteAppService.getFileIOService().importNote(file.getPath());
+            myNote.setBlocks(importedNote.getBlocks());
+            initView();
+            showAlert(Alert.AlertType.INFORMATION, "Successfully import.");
+        } catch (NoteAppServiceException | IOException ex) {
+            showAlert(Alert.AlertType.ERROR, ex.getMessage());
+        } 
+    }
+    
+    protected void exportFile() {
+        //Tạo directory chooser
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle("Choose dir to export file");
+        File dir = directoryChooser.showDialog(stage);
+        if (dir == null) {
+            return;
+        }
+        //Export ra tên file tương ứng
+        String pdfFileName = myNote.getHeader() + "_" + myNote.getAuthor() + ".pdf";
+        try {
+            noteAppService.getFileIOService().outputNote(dir + "\\" + pdfFileName, myNote);
+            showAlert(Alert.AlertType.INFORMATION, "Successfully export.");
+        } catch (NoteAppServiceException | IOException ex) {
+            showAlert(Alert.AlertType.ERROR, ex.getMessage());
+        } 
     }
 
     /**

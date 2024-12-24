@@ -1,13 +1,12 @@
 package com.noteapp.controller;
 
+import com.noteapp.common.service.NoteAppService;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.user.dao.AdminDAO;
 import com.noteapp.user.dao.UserDAO;
 import com.noteapp.user.model.User;
 import com.noteapp.user.service.AdminService;
-import com.noteapp.user.service.IAdminService;
-import com.noteapp.user.service.IUserService;
 import com.noteapp.user.service.UserService;
-import com.noteapp.user.service.UserServiceException;
 import java.io.IOException;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -23,7 +22,7 @@ import javafx.stage.Stage;
  * FXML Controller class cho trang Login
  * @author Nhóm 17
  */
-public class LoginController extends InitableController {   
+public class LoginController extends RequestServiceController implements Initable {   
     //Các thuộc tính FXML
     @FXML
     private Button loginButton;
@@ -37,14 +36,12 @@ public class LoginController extends InitableController {
     private Button closeButton;
     @FXML
     private Label forgotPasswordLabel;
-    
-    private IUserService userService;
-    private IAdminService adminService;
         
     @Override
     public void init() {
-        userService = new UserService(UserDAO.getInstance());
-        adminService = new AdminService(UserDAO.getInstance(), AdminDAO.getInstance());
+        noteAppService = new NoteAppService();
+        noteAppService.setUserService(new UserService(UserDAO.getInstance()));
+        noteAppService.setAdminService(new AdminService(UserDAO.getInstance(), AdminDAO.getInstance()));
         loginButton.setOnAction((ActionEvent event) -> {
             login();
         });
@@ -57,14 +54,6 @@ public class LoginController extends InitableController {
         forgotPasswordLabel.setOnMouseClicked((MouseEvent event) -> {
             ResetPasswordController.open(stage);
         });
-    }
-
-    public void setUserService(IUserService userService) {
-        this.userService = userService;
-    }
-
-    public void setAdminService(IAdminService adminService) {
-        this.adminService = adminService;
     }
 
     /**
@@ -80,20 +69,20 @@ public class LoginController extends InitableController {
       
         //Kiểm tra thông tin đăng nhập
         try { 
-            boolean isAdmin = adminService.isAdmin(username);
+            boolean isAdmin = noteAppService.getAdminService().isAdmin(username);
             if (!isAdmin) {
-                User user = userService.checkUser(username, password);
+                User user = noteAppService.getUserService().checkUser(username, password);
                 showAlert(Alert.AlertType.INFORMATION, "Successfully Login");
                 //Mở Dashboard của user này
                 DashboardController.open(user, stage);
             } else {
-                adminService.checkAdmin(username, password);
+                noteAppService.getAdminService().checkAdmin(username, password);
                 showAlert(Alert.AlertType.INFORMATION, "Successfully Login");
                 //Mở Dashboard của user này
                 AdminDashboardController.open(stage);
             }
             
-        } catch (UserServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }

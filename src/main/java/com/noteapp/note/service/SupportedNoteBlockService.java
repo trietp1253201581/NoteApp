@@ -1,6 +1,8 @@
 package com.noteapp.note.service;
 
 import com.noteapp.common.dao.DAOException;
+import com.noteapp.common.service.CausedBySystemException;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.note.dao.IConcreateBlockDAO;
 import com.noteapp.note.dao.INoteBlockDAO;
 import com.noteapp.note.model.NoteBlock;
@@ -38,9 +40,9 @@ public class SupportedNoteBlockService {
         this.surveyBlockDAO = surveyBlockDAO;
     }
     
-    private void checkNullDAO() throws NoteServiceException {
+    private void checkNullDAO() throws NoteAppServiceException {
         if (noteBlockDAO == null || textBlockDAO == null || surveyBlockDAO == null) {
-            throw new NoteServiceException("DAO is null!");
+            throw new CausedBySystemException("DAO is null!");
         }
     }
     
@@ -99,7 +101,7 @@ public class SupportedNoteBlockService {
      * @see TextBlock
      * @see SurveyBlock
      */
-    protected List<NoteBlock> getAll(int noteId) throws DAOException, NoteServiceException {
+    protected List<NoteBlock> getAll(int noteId) throws DAOException, NoteAppServiceException {
         checkNullDAO();
         //Lấy các thông tin cơ bản của block trước
         List<NoteBlock> noteBlocks = noteBlockDAO.getAll(noteId);
@@ -132,7 +134,7 @@ public class SupportedNoteBlockService {
      * @see TextBlock
      * @see SurveyBlock
      */
-    protected List<NoteBlock> getAll(int noteId, String editor) throws DAOException, NoteServiceException {
+    protected List<NoteBlock> getAll(int noteId, String editor) throws DAOException, NoteAppServiceException {
         checkNullDAO();
         List<NoteBlock> noteBlocks = noteBlockDAO.getAll(noteId);
         List<NoteBlock> returnBlocks = new ArrayList<>();
@@ -162,7 +164,7 @@ public class SupportedNoteBlockService {
      * @see TextBlock
      * @see SurveyBlock
      */
-    protected void create(int noteId, NoteBlock newBlock) throws DAOException, NoteServiceException {
+    protected void create(int noteId, NoteBlock newBlock) throws DAOException, NoteAppServiceException {
         checkNullDAO();
         newBlock = noteBlockDAO.create(noteId, newBlock);
         switch (newBlock.getBlockType()) {
@@ -177,7 +179,7 @@ public class SupportedNoteBlockService {
         }
     }
     
-    protected void createOtherVersion(NoteBlock noteBlock, String otherEditor) throws DAOException, NoteServiceException {
+    protected void createOtherVersion(NoteBlock noteBlock, String otherEditor) throws DAOException, NoteAppServiceException {
         checkNullDAO();
         noteBlock.setEditor(otherEditor);
         switch (noteBlock.getBlockType()) {
@@ -204,7 +206,7 @@ public class SupportedNoteBlockService {
      * @see TextBlock
      * @see SurveyBlock
      */
-    protected void update(int noteId, NoteBlock needUpdateBlock) throws DAOException, NoteServiceException {
+    protected void update(int noteId, NoteBlock needUpdateBlock) throws DAOException, NoteAppServiceException {
         checkNullDAO();
         noteBlockDAO.update(noteId, needUpdateBlock);
         switch (needUpdateBlock.getBlockType()) {
@@ -225,7 +227,7 @@ public class SupportedNoteBlockService {
      * @throws DAOException Xảy ra khi các thao tác với CSDL tương ứng
      * bị lỗi
      */
-    protected void delete(int blockId) throws DAOException, NoteServiceException {
+    protected void delete(int blockId) throws DAOException, NoteAppServiceException {
         checkNullDAO();
         noteBlockDAO.delete(blockId);
     }
@@ -243,7 +245,7 @@ public class SupportedNoteBlockService {
      * @see TextBlock
      * @see SurveyBlock
      */
-    protected void save(int noteId, List<NoteBlock> noteBlocks) throws DAOException, NoteServiceException {
+    protected void save(int noteId, List<NoteBlock> noteBlocks) throws DAOException, NoteAppServiceException {
         //Lấy các block của phiên bản note này
         String editor = noteBlocks.get(0).getEditor();
         List<NoteBlock> blocksInDB = this.getAll(noteId, editor);

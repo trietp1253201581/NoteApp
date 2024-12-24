@@ -1,14 +1,14 @@
 package com.noteapp.controller;
 
+import com.noteapp.common.service.NoteAppService;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.user.dao.UserDAO;
 import com.noteapp.user.model.Email;
 import com.noteapp.user.model.User;
-import com.noteapp.user.service.IUserService;
 import com.noteapp.user.service.UserService;
 import com.noteapp.user.service.security.MailjetSevice;
 import com.noteapp.user.service.security.SixNumCodeGenerator;
 import com.noteapp.user.service.security.VerificationMailService;
-import com.noteapp.user.service.UserServiceException;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -31,7 +31,7 @@ import javafx.stage.Stage;
  * 
  * @author Nhóm 17
  */
-public class RegisterController extends InitableController {
+public class RegisterController extends RequestServiceController implements Initable {
     //Các thuộc tính FXML    
     @FXML
     private TextField nameField;
@@ -74,15 +74,12 @@ public class RegisterController extends InitableController {
     @FXML
     private Button closeButton;
     
-    private IUserService userService;
-    private VerificationMailService verificationMailService;
     private User newUser;
     
     @Override
     public void init() {
-        userService = new UserService(UserDAO.getInstance());   
-        verificationMailService = new VerificationMailService(new MailjetSevice(), 
-                    new SixNumCodeGenerator());
+        noteAppService = new NoteAppService();
+        noteAppService.setUserService(new UserService(UserDAO.getInstance()));
         initView();
         registerButton.setOnAction((ActionEvent event) -> {
             register();
@@ -93,14 +90,6 @@ public class RegisterController extends InitableController {
         backLoginLabel.setOnMouseClicked((MouseEvent event) -> {
             LoginController.open(stage);
         });
-    }
-
-    public void setUserService(IUserService userService) {
-        this.userService = userService;
-    }
-
-    public void setVerificationMailService(VerificationMailService verificationMailService) {
-        this.verificationMailService = verificationMailService;
     }
     
     protected void initView() {
@@ -242,14 +231,14 @@ public class RegisterController extends InitableController {
     private void createUser(User newUser) {
         try { 
             //Tạo User mới thành công
-            userService.create(newUser);
+            noteAppService.getUserService().create(newUser);
             showAlert(Alert.AlertType.INFORMATION, "Successfully create");
             Optional<ButtonType> optional = showAlert(Alert.AlertType.CONFIRMATION, "Back to Login");
             if(optional.get() == ButtonType.OK) {
                 //Quay về trang đăng nhập
                 LoginController.open(stage);
             }          
-        } catch (UserServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }
@@ -261,20 +250,31 @@ public class RegisterController extends InitableController {
      * @see emailAddressField
      */
     private VerificationMailService.CodeStatus verifyEmail() {
-        Email toEmail = new Email();
-        toEmail.setAddress(emailAddressField.getText());
-        toEmail.setName(emailNameField.getText());
-        verificationMailService.sendCode(toEmail);
-        
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("VERIFY CODE HAS SENT TO YOUR EMAIL");
-        dialog.setHeaderText("Enter your verification code");
-        //Lấy kết quả
-        Optional<String> confirm = dialog.showAndWait();
-        confirm.ifPresent(inputCode -> {
-            verificationMailService.checkCode(inputCode);
-        });
-        return verificationMailService.getCodeStatus();
+        try {
+            Email toEmail = new Email();
+            toEmail.setAddress(emailAddressField.getText());
+            toEmail.setName(emailNameField.getText());
+            noteAppService.setVerificationMailService(new VerificationMailService(new MailjetSevice(), 
+                    new SixNumCodeGenerator()));
+            noteAppService.getVerificationMailService().sendCode(toEmail);
+
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("VERIFY CODE HAS SENT TO YOUR EMAIL");
+            dialog.setHeaderText("Enter your verification code");
+            //Lấy kết quả
+            Optional<String> confirm = dialog.showAndWait();
+            confirm.ifPresent(inputCode -> {
+                try {
+                    noteAppService.getVerificationMailService().checkCode(inputCode);
+                } catch (NoteAppServiceException ex) {
+                    showAlert(Alert.AlertType.ERROR, ex.getMessage());
+                }
+            });
+            return noteAppService.getVerificationMailService().getCodeStatus();
+        } catch (NoteAppServiceException ex) {
+            showAlert(Alert.AlertType.ERROR, ex.getMessage());
+            return VerificationMailService.CodeStatus.FALSE;
+        }
     }
     
     /**

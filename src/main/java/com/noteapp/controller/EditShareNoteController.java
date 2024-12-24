@@ -1,12 +1,14 @@
 package com.noteapp.controller;
 
+import com.noteapp.common.service.NoteAppServiceException;
+import static com.noteapp.controller.Controller.showAlert;
 import com.noteapp.note.model.Note;
 import com.noteapp.note.model.NoteBlock;
 import com.noteapp.note.model.ShareNote;
 import com.noteapp.note.model.SurveyBlock;
 import com.noteapp.note.model.TextBlock;
-import com.noteapp.note.service.NoteServiceException;
 import com.noteapp.user.model.User;
+import java.io.File;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -25,6 +27,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 /**
@@ -91,12 +94,12 @@ public class EditShareNoteController extends EditNoteController {
         setOnAutoUpdate();
     }
     
-    protected void autoUpdate() throws NoteServiceException {
+    protected void autoUpdate() throws NoteAppServiceException {
         if (needReload) {
             Optional<ButtonType> btnType = showAlert(Alert.AlertType.WARNING, "You need to reload.");
             reload();
         }
-        myShareNote = shareNoteService.open(myShareNote.getId(), myShareNote.getEditor());
+        myShareNote = noteAppService.getShareNoteService().open(myShareNote.getId(), myShareNote.getEditor());
         noteHeaderLabel.setText(myShareNote.getHeader());
         loadFilter(myShareNote.getFilters(), 8);
         Map<Integer, List<NoteBlock>> otherEditorBlocks = myShareNote.getOtherEditorBlocks();
@@ -123,7 +126,7 @@ public class EditShareNoteController extends EditNoteController {
                     try {
                         autoUpdate();
                         
-                    } catch (NoteServiceException ex) {
+                    } catch (NoteAppServiceException ex) {
                         showAlert(Alert.AlertType.WARNING, "Can't update!");
                     }
                 });
@@ -286,9 +289,9 @@ public class EditShareNoteController extends EditNoteController {
             myShareNote.getBlocks().add(block);
         }
         try {
-            noteService.save(myShareNote);
+            noteAppService.getNoteService().save(myShareNote);
             showAlert(Alert.AlertType.INFORMATION, "Successfully save for " + myShareNote.getHeader());
-        } catch (NoteServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }
@@ -375,6 +378,25 @@ public class EditShareNoteController extends EditNoteController {
             }
         }
         return new NoteBlock();
+    }
+    
+    @Override
+    protected void exportFile() {
+        //Tạo directory chooser
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle("Choose dir to export file");
+        File dir = directoryChooser.showDialog(stage);
+        if (dir == null) {
+            return;
+        }
+        //Export ra tên file tương ứng
+        String pdfFileName = myNote.getHeader() + "_" + myShareNote.getAuthor() + ".pdf";
+        try {
+            noteAppService.getFileIOService().outputNote(dir + "\\" + pdfFileName, myShareNote);
+            showAlert(Alert.AlertType.INFORMATION, "Successfully export.");
+        } catch (NoteAppServiceException | IOException ex) {
+            showAlert(Alert.AlertType.ERROR, ex.getMessage());
+        } 
     }
     
     /**

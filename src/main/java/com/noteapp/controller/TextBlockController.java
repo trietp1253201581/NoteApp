@@ -17,7 +17,7 @@ import javafx.scene.layout.Region;
  * @author Nhóm 17
  * @see EditNoteController
  */
-public class TextBlockController extends InitableController {
+public class TextBlockController extends Controller implements Initable {
     @FXML
     private TextArea editableText;
     @FXML

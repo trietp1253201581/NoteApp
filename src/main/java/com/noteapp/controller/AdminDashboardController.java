@@ -1,10 +1,10 @@
 package com.noteapp.controller;
 
+import com.noteapp.common.service.NoteAppService;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.user.dao.AdminDAO;
 import com.noteapp.user.dao.UserDAO;
 import com.noteapp.user.service.AdminService;
-import com.noteapp.user.service.IAdminService;
-import com.noteapp.user.service.UserServiceException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +21,7 @@ import javafx.stage.Stage;
  * Controller cho view Dashboard của Admin
  * @author admin
  */
-public class AdminDashboardController extends InitableController {
+public class AdminDashboardController extends RequestServiceController implements Initable {
     @FXML
     private Button viewUsersButton;
     @FXML
@@ -32,13 +32,13 @@ public class AdminDashboardController extends InitableController {
     private Button closeButton;
     @FXML
     private Button logoutButton;
-    
-    private IAdminService adminService;
+
     private Map<String, Boolean> lockedStatusOfUsers;
     
     @Override
     public void init() {
-        adminService = new AdminService(UserDAO.getInstance(), AdminDAO.getInstance());
+        noteAppService = new NoteAppService();
+        noteAppService.setAdminService(new AdminService(UserDAO.getInstance(), AdminDAO.getInstance()));
         initView();
         closeButton.setOnAction((ActionEvent event) -> {
             close();
@@ -54,23 +54,19 @@ public class AdminDashboardController extends InitableController {
         });
     }
 
-    public void setAdminService(IAdminService adminService) {
-        this.adminService = adminService;
-    }
-    
     protected void initView() {
         try {
-            lockedStatusOfUsers = adminService.getAllLockedStatus();
+            lockedStatusOfUsers = noteAppService.getAdminService().getAllLockedStatus();
             loadUsers(lockedStatusOfUsers);
-        } catch (UserServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }   
     }
     
     private void saveLockedStatus(String username, boolean lockedStatus) {
         try {
-            adminService.updateLockedStatus(username, lockedStatus);
-        } catch (UserServiceException ex) {
+            noteAppService.getAdminService().updateLockedStatus(username, lockedStatus);
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }

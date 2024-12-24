@@ -1,5 +1,6 @@
 package com.noteapp.note.service;
 
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.note.model.Note;
 import java.util.List;
 
@@ -12,37 +13,37 @@ public interface INoteService {
      * Tạo một {@link Note} mới và lưu vào trong CSDL
      * @param newNote Note mới cần tạo
      * @return Note vừa được tạo thành công
-     * @throws NoteServiceException Xảy ra khi Note đã tồn tại, hoặc các
+     * @throws NoteAppServiceException Xảy ra khi Note đã tồn tại, hoặc các
      * thao tác với CSDL bị lỗi
      */
-    Note create(Note newNote) throws NoteServiceException;
+    Note create(Note newNote) throws NoteAppServiceException;
     
     /**
      * Xóa một Note đã tồn tại trong CSDL
      * @param noteId id của Note cần xóa
      * @return Note vừa được xóa thành công
-     * @throws NoteServiceException Xảy ra khi các thao tác tương ứng với CSDL 
+     * @throws NoteAppServiceException Xảy ra khi các thao tác tương ứng với CSDL 
      * bị lỗi
      */
-    Note delete(int noteId) throws NoteServiceException;
+    Note delete(int noteId) throws NoteAppServiceException;
     
     /**
      * Lấy tất cả các Note thuộc quyền sở hữu của User
      * @param author username của User sở hữu các Note này
      * @return Một List các Note thuộc quyền của User này nếu thành công
-     * @throws NoteServiceException Xảy ra khi các thao tác với CSDL liên quan
+     * @throws NoteAppServiceException Xảy ra khi các thao tác với CSDL liên quan
      * bị lỗi
      */
-    List<Note> getAll(String author) throws NoteServiceException;
+    List<Note> getAll(String author) throws NoteAppServiceException;
     
     /**
      * Mở một Note, cụ thể là lấy tất cả các dữ liệu liên quan tới một Note từ 
      * các CSDL Note, NoteFilter, NoteBlock, TextBlock, SurveyBlock và trả về
      * @param noteId id của Note cần mở
      * @return Note được mở thành công
-     * @throws NoteServiceException Xảy ra khi các thao tác với các CSDL liên quan bị lỗi
+     * @throws NoteAppServiceException Xảy ra khi các thao tác với các CSDL liên quan bị lỗi
      */
-    Note open(int noteId) throws NoteServiceException;
+    Note open(int noteId) throws NoteAppServiceException;
     
     /**
      * Lưu một Note, bản chất là cập nhật các thông tin của một Note vào các 
@@ -50,8 +51,8 @@ public interface INoteService {
      * vào các CSDL tương ứng.
      * @param note Note cần lưu
      * @return Note sau khi được cập nhật hoặc tạo mới thành công
-     * @throws NoteServiceException Xảy ra khi các thao tác với CSDL tương ứng
+     * @throws NoteAppServiceException Xảy ra khi các thao tác với CSDL tương ứng
      * bị lỗi
      */
-    Note save(Note note) throws NoteServiceException;
+    Note save(Note note) throws NoteAppServiceException;
 }

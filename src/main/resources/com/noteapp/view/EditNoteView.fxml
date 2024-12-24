@@ -157,7 +157,7 @@
                         <Insets top="3.0" />
                      </HBox.margin>
                   </Line>
-                  <Button alignment="CENTER" mnemonicParsing="false" prefHeight="70.0" prefWidth="70.0" styleClass="main-button" stylesheets="@dashboardStyle.css" textOverrun="CLIP">
+                  <Button fx:id="importFileButton" alignment="CENTER" mnemonicParsing="false" prefHeight="70.0" prefWidth="70.0" styleClass="main-button" stylesheets="@dashboardStyle.css" textOverrun="CLIP">
                      <graphic>
                         <VBox alignment="CENTER" prefHeight="60.0" prefWidth="50.0">
                            <children>
@@ -174,7 +174,7 @@
                         <Insets top="3.0" />
                      </HBox.margin>
                   </Button>
-                  <Button alignment="CENTER" mnemonicParsing="false" prefHeight="70.0" prefWidth="70.0" styleClass="main-button" stylesheets="@dashboardStyle.css" textOverrun="CLIP">
+                  <Button fx:id="exportFileButton" alignment="CENTER" mnemonicParsing="false" prefHeight="70.0" prefWidth="70.0" styleClass="main-button" stylesheets="@dashboardStyle.css" textOverrun="CLIP">
                      <graphic>
                         <VBox alignment="CENTER" prefHeight="60.0" prefWidth="50.0">
                            <children>

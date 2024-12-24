@@ -11,7 +11,7 @@ import javafx.scene.control.RadioButton;
  * @author Nhóm 17
  * @see SurveyBlockController
  */
-public class SurveyItemController extends InitableController {
+public class SurveyItemController extends Controller implements Initable {
     @FXML
     private Label choice;
     @FXML

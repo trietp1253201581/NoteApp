@@ -2,6 +2,8 @@ package com.noteapp.note.service;
 
 import com.noteapp.common.dao.DAOException;
 import com.noteapp.common.dao.NotExistDataException;
+import com.noteapp.common.service.CausedBySystemException;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.note.dao.IConcreateBlockDAO;
 import com.noteapp.note.dao.INoteBlockDAO;
 import com.noteapp.note.dao.INoteDAO;
@@ -44,14 +46,14 @@ public class ShareNoteService implements IShareNoteService {
         this.shareNoteDAO = shareNoteDAO;
     }
     
-    private void checkNullDAO() throws NoteServiceException {
+    private void checkNullDAO() throws NoteAppServiceException {
         if (shareNoteDAO == null) {
-            throw new NoteServiceException("DAO is null!");
+            throw new CausedBySystemException("DAO is null!");
         }
     }
     
     @Override
-    public ShareNote share(Note note, String editor, ShareNote.ShareType shareType) throws NoteServiceException {
+    public ShareNote share(Note note, String editor, ShareNote.ShareType shareType) throws NoteAppServiceException {
         checkNullDAO();
         //Set các thông tin của note cho shareNote
         int noteId = note.getId();
@@ -66,7 +68,7 @@ public class ShareNoteService implements IShareNoteService {
         } catch (NotExistDataException ex1) {
             //Nếu không thì cần tạo mới trong CSDL
         } catch (DAOException ex2) {
-            throw new NoteServiceException(ex2.getMessage(), ex2.getCause());
+            throw new CausedBySystemException(ex2.getMessage(), ex2.getCause());
         }
         //Kiểm tra note của User đã được chia sẻ cho người khác hay chưa
         try {
@@ -78,10 +80,10 @@ public class ShareNoteService implements IShareNoteService {
             try {
                 shareNoteDAO.create(shareNote);  
             } catch (DAOException ex3) {
-                throw new NoteServiceException(ex3.getMessage(), ex3.getCause());
+                throw new CausedBySystemException(ex3.getMessage(), ex3.getCause());
             }    
         } catch (DAOException ex2) {
-            throw new NoteServiceException(ex2.getMessage(), ex2.getCause());
+            throw new CausedBySystemException(ex2.getMessage(), ex2.getCause());
         }
         try {
             //Tạo ShareNote mới
@@ -98,12 +100,12 @@ public class ShareNoteService implements IShareNoteService {
             noteService.save(note);
             return this.open(shareNote.getId(), shareNote.getEditor());
         } catch (DAOException ex) {
-            throw new NoteServiceException(ex.getMessage(), ex.getCause());
+            throw new CausedBySystemException(ex.getMessage(), ex.getCause());
         }
     }
     
     @Override
-    public ShareNote open(int noteId, String editor) throws NoteServiceException {
+    public ShareNote open(int noteId, String editor) throws NoteAppServiceException {
         checkNullDAO();
         //Trước hết mở Note
         Note note = noteService.open(noteId);
@@ -124,12 +126,12 @@ public class ShareNoteService implements IShareNoteService {
             shareNote.setBlocks(thisEditorBlocks);
             return shareNote;
         } catch (DAOException ex) {
-            throw new NoteServiceException(ex.getMessage(), ex.getCause());
+            throw new CausedBySystemException(ex.getMessage(), ex.getCause());
         }
     }
     
     @Override
-    public List<ShareNote> getAllReceived(String editor) throws NoteServiceException {
+    public List<ShareNote> getAllReceived(String editor) throws NoteAppServiceException {
         checkNullDAO();
         try {
             List<ShareNote> shareNotes = shareNoteDAO.getAll(editor);
@@ -139,7 +141,7 @@ public class ShareNoteService implements IShareNoteService {
             }
             return receivedNotes;
         } catch (DAOException ex) {
-            throw new NoteServiceException(ex.getMessage(), ex.getCause());
+            throw new CausedBySystemException(ex.getMessage(), ex.getCause());
         }
     }
 }

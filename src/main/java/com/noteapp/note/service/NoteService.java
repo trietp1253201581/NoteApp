@@ -2,10 +2,18 @@ package com.noteapp.note.service;
 
 import com.noteapp.common.dao.DAOException;
 import com.noteapp.common.dao.NotExistDataException;
+import com.noteapp.common.service.CausedBySystemException;
+import com.noteapp.common.service.CausedByUserException;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.note.dao.IConcreateBlockDAO;
 import com.noteapp.note.dao.INoteBlockDAO;
 import com.noteapp.note.dao.INoteDAO;
 import com.noteapp.note.dao.INoteFilterDAO;
+import com.noteapp.note.dao.NoteBlockDAO;
+import com.noteapp.note.dao.NoteDAO;
+import com.noteapp.note.dao.NoteFilterDAO;
+import com.noteapp.note.dao.SurveyBlockDAO;
+import com.noteapp.note.dao.TextBlockDAO;
 import com.noteapp.note.model.Note;
 import com.noteapp.note.model.NoteBlock;
 import com.noteapp.note.model.NoteFilter;
@@ -20,50 +28,55 @@ import java.util.List;
  * @see INoteDAO
  * @see INoteFilterDAO
  * @see INoteBlockDAO
- * @see ITextBlockDAO
- * @see ISurveyBlockDAO
+ * @see IConcreateBlockDAO
  */
 public class NoteService implements INoteService {
     protected INoteDAO noteDAO;
     protected INoteFilterDAO noteFilterDAO;
+    protected INoteBlockDAO noteBlockDAO;
+    protected IConcreateBlockDAO<TextBlock> textBlockDAO;
+    protected IConcreateBlockDAO<SurveyBlock> surveyBlockDAO;
     protected SupportedNoteBlockService blockService;
 
     public NoteService(INoteDAO noteDAO, INoteFilterDAO noteFilterDAO, INoteBlockDAO noteBlockDAO, IConcreateBlockDAO<TextBlock> textBlockDAO, IConcreateBlockDAO<SurveyBlock> surveyBlockDAO) {
         this.noteDAO = noteDAO;
         this.noteFilterDAO = noteFilterDAO;
+        this.noteBlockDAO = noteBlockDAO;
+        this.textBlockDAO = textBlockDAO;
+        this.surveyBlockDAO = surveyBlockDAO;
         blockService = new SupportedNoteBlockService(noteBlockDAO, textBlockDAO, surveyBlockDAO);
     }
 
-    public void setBlockService(SupportedNoteBlockService blockService) {
-        this.blockService = blockService;
+
+    /**
+     * Lấy các thể hiện tương ứng cho các DAO
+     */
+    protected void getInstanceOfDAO() {
+        noteDAO = NoteDAO.getInstance();
+        noteFilterDAO = NoteFilterDAO.getInstance();
+        noteBlockDAO = NoteBlockDAO.getInstance();
+        textBlockDAO = TextBlockDAO.getInstance();
+        surveyBlockDAO = SurveyBlockDAO.getInstance();
     }
 
-    public void setNoteDAO(INoteDAO noteDAO) {
-        this.noteDAO = noteDAO;
-    }
-
-    public void setNoteFilterDAO(INoteFilterDAO noteFilterDAO) {
-        this.noteFilterDAO = noteFilterDAO;
-    }
-    
-    private void checkNullDAO() throws NoteServiceException {
+    private void checkNullDAO() throws NoteAppServiceException {
         if (noteDAO == null || noteFilterDAO == null) {
-            throw new NoteServiceException("DAO is null!");
+            throw new CausedBySystemException("DAO is null!");
         }
     }
     
     @Override
-    public Note create(Note newNote) throws NoteServiceException {
+    public Note create(Note newNote) throws NoteAppServiceException {
         checkNullDAO();
         int noteId = newNote.getId();
         //Kiểm tra note đã tồn tại hay chưa
         try {          
             noteDAO.get(noteId);
-            throw new NoteServiceException("Already exist note!");
+            throw new CausedByUserException("Already exist note!");
         } catch (NotExistDataException nedExByGet) {
             //Nếu chưa tồn tại thì tiếp tục
         } catch (DAOException exByGet) {
-            throw new NoteServiceException(exByGet.getMessage(), exByGet.getCause());
+            throw new CausedBySystemException(exByGet.getMessage(), exByGet.getCause());
         }
         try {
             //Thêm các trường thông tin cơ bản vào CSDL Note
@@ -80,12 +93,12 @@ public class NoteService implements INoteService {
             //Mở Note và trả về
             return this.open(newNote.getId());
         } catch (DAOException exByCreate) {
-            throw new NoteServiceException(exByCreate.getMessage(), exByCreate.getCause());
+            throw new CausedBySystemException(exByCreate.getMessage(), exByCreate.getCause());
         }
     }
     
     @Override
-    public Note delete(int noteId) throws NoteServiceException {
+    public Note delete(int noteId) throws NoteAppServiceException {
         checkNullDAO();
         try {
             //Lấy Note bằng cách mở
@@ -94,12 +107,12 @@ public class NoteService implements INoteService {
             noteDAO.delete(noteId);
             return deletedNote;
         } catch (DAOException exByGetAndDelete) {
-            throw new NoteServiceException(exByGetAndDelete.getMessage(), exByGetAndDelete.getCause());
+            throw new CausedBySystemException(exByGetAndDelete.getMessage(), exByGetAndDelete.getCause());
         }
     }
-    
+
     @Override
-    public List<Note> getAll(String author) throws NoteServiceException {
+    public List<Note> getAll(String author) throws NoteAppServiceException {
         checkNullDAO();
         try {
             List<Note> notes = noteDAO.getAll(author);
@@ -109,12 +122,12 @@ public class NoteService implements INoteService {
             }
             return returnNotes;
         } catch (DAOException exByGetAll) {
-            throw new NoteServiceException(exByGetAll.getMessage(), exByGetAll.getCause());
+            throw new CausedBySystemException(exByGetAll.getMessage(), exByGetAll.getCause());
         }
     }
     
     @Override
-    public Note open(int noteId) throws NoteServiceException {
+    public Note open(int noteId) throws NoteAppServiceException {
         checkNullDAO();
         try {
             //Lấy các thông tin cơ bản
@@ -126,12 +139,13 @@ public class NoteService implements INoteService {
             note.setBlocks(noteBlocks);
             return note;
         } catch (DAOException exByGet) {
-            throw new NoteServiceException(exByGet.getMessage(), exByGet.getCause());
+            throw new CausedBySystemException(exByGet.getCause());
         }
     } 
+
     
     @Override
-    public Note save(Note note) throws NoteServiceException {
+    public Note save(Note note) throws NoteAppServiceException {
         checkNullDAO();
         int noteId = note.getId();
         //Kiểm tra note đã tồn tại chưa
@@ -141,7 +155,7 @@ public class NoteService implements INoteService {
             //Nếu chưa tồn tại thì tạo note mới
             return this.create(note);
         } catch (DAOException exByGet) {
-            throw new NoteServiceException(exByGet.getMessage(), exByGet.getCause());
+            throw new CausedBySystemException(exByGet.getMessage(), exByGet.getCause());
         }
         try {
             //Cập nhật các thông tin cơ bản vào CSDL Note
@@ -156,7 +170,8 @@ public class NoteService implements INoteService {
             blockService.save(note.getId(), note.getBlocks());
             return note;
         } catch (DAOException exByUpdate) {
-            throw new NoteServiceException(exByUpdate.getMessage(), exByUpdate.getCause());
+            throw new CausedBySystemException(exByUpdate.getMessage(), exByUpdate.getCause());
         }
     }
+
 }

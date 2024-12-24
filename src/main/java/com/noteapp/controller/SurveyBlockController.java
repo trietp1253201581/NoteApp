@@ -19,7 +19,7 @@ import javafx.scene.layout.VBox;
  * @author Nhóm 17
  * @see EditNoteController
  */
-public class SurveyBlockController extends InitableController {
+public class SurveyBlockController extends Controller implements Initable {
     @FXML
     private Label blockHeader;
     @FXML

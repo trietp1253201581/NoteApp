@@ -1,5 +1,7 @@
 package com.noteapp.controller;
 
+import com.noteapp.common.service.NoteAppService;
+import com.noteapp.common.service.NoteAppServiceException;
 import com.noteapp.note.dao.NoteBlockDAO;
 import com.noteapp.note.dao.NoteDAO;
 import com.noteapp.note.dao.NoteFilterDAO;
@@ -12,16 +14,11 @@ import com.noteapp.note.model.NoteBlock;
 import com.noteapp.note.model.NoteFilter;
 import com.noteapp.note.model.ShareNote;
 import com.noteapp.note.model.TextBlock;
-import com.noteapp.note.service.INoteService;
-import com.noteapp.note.service.IShareNoteService;
 import com.noteapp.note.service.NoteService;
 import com.noteapp.user.model.User;
-import com.noteapp.note.service.NoteServiceException;
 import com.noteapp.note.service.ShareNoteService;
 import com.noteapp.user.dao.UserDAO;
-import com.noteapp.user.service.IUserService;
 import com.noteapp.user.service.UserService;
-import com.noteapp.user.service.UserServiceException;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -52,7 +49,7 @@ import javafx.stage.Stage;
  * FXML Controller class cho Dashboard của User
  * @author Nhóm 17
  */
-public class DashboardController extends InitableController {
+public class DashboardController extends RequestServiceController implements Initable {
     //Các thuộc tính FXML của form dashboard chung
     @FXML 
     private BorderPane extraServiceScene;
@@ -135,18 +132,15 @@ public class DashboardController extends InitableController {
     private List<ShareNote> myReceivedNotes;
     private List<Note> openedNotes;
     
-    private IUserService userService;
-    private INoteService noteService;
-    private IShareNoteService shareNoteService;
-    
     @Override
     public void init() {
-        userService = new UserService(UserDAO.getInstance());
-        noteService = new NoteService(NoteDAO.getInstance(), NoteFilterDAO.getInstance(), 
-                NoteBlockDAO.getInstance(), TextBlockDAO.getInstance(), SurveyBlockDAO.getInstance());
-        shareNoteService = new ShareNoteService(ShareNoteDAO.getInstance(),  
+        noteAppService = new NoteAppService();
+        noteAppService.setUserService(new UserService(UserDAO.getInstance()));
+        noteAppService.setNoteService(new NoteService(NoteDAO.getInstance(), NoteFilterDAO.getInstance(), 
+                NoteBlockDAO.getInstance(), TextBlockDAO.getInstance(), SurveyBlockDAO.getInstance()));
+        noteAppService.setShareNoteService(new ShareNoteService(ShareNoteDAO.getInstance(),  
                 NoteDAO.getInstance(), NoteFilterDAO.getInstance(), 
-                NoteBlockDAO.getInstance(), TextBlockDAO.getInstance(), SurveyBlockDAO.getInstance());
+                NoteBlockDAO.getInstance(), TextBlockDAO.getInstance(), SurveyBlockDAO.getInstance()));
         initView();
         closeButton.setOnAction((ActionEvent event) -> {
             super.close();
@@ -155,14 +149,16 @@ public class DashboardController extends InitableController {
         myNotesButton.setOnAction((ActionEvent event) -> {
             changeSceneInExtraScene(myNotesButton);
             try {
-                myNotes = noteService.getAll(myUser.getUsername());
-            } catch (NoteServiceException ex) {
+                myNotes = noteAppService.getNoteService().getAll(myUser.getUsername());
+            } catch (NoteAppServiceException ex) {
+                showAlert(Alert.AlertType.ERROR, ex.getMessage());
                 myNotes = new ArrayList<>();
             }
             //Lấy tất cả các note được share tới myUser này
             try { 
-                myReceivedNotes = shareNoteService.getAllReceived(myUser.getUsername());
-            } catch (NoteServiceException ex) {
+                myReceivedNotes = noteAppService.getShareNoteService().getAllReceived(myUser.getUsername());
+            } catch (NoteAppServiceException ex) {
+                myReceivedNotes = new ArrayList<>();
                 showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }
             initMyNotesScene(myNotes, myReceivedNotes);
@@ -174,8 +170,9 @@ public class DashboardController extends InitableController {
         homeButton.setOnAction((ActionEvent event) -> {
             changeSceneInExtraScene(homeButton);
             try {
-                myNotes = noteService.getAll(myUser.getUsername());
-            } catch (NoteServiceException ex) {
+                myNotes = noteAppService.getNoteService().getAll(myUser.getUsername());
+            } catch (NoteAppServiceException ex) {
+                showAlert(Alert.AlertType.ERROR, ex.getMessage());
                 myNotes = new ArrayList<>();
             }
             initHomeScene(myNotes);
@@ -218,8 +215,9 @@ public class DashboardController extends InitableController {
     protected void initView() {
         userLabel.setText(myUser.getName());
         try {           
-            myNotes = noteService.getAll(myUser.getUsername());
-        } catch (NoteServiceException ex) {
+            myNotes = noteAppService.getNoteService().getAll(myUser.getUsername());
+        } catch (NoteAppServiceException ex) {
+            showAlert(Alert.AlertType.ERROR, ex.getMessage());
             myNotes = new ArrayList<>();
         }
         initHomeScene(myNotes);
@@ -229,17 +227,17 @@ public class DashboardController extends InitableController {
     private void openNote(int noteId, Optional<ButtonType> optional) {
         if(optional.get() == ButtonType.OK) {                        
             try {
-                currentNote = noteService.open(noteId);
+                currentNote = noteAppService.getNoteService().open(noteId);
                 if (!openedNotes.contains(currentNote)) {
                     openedNotes.add(currentNote);
                 }
                 if (currentNote.isPubliced()) {
-                    currentNote = shareNoteService.open(noteId, myUser.getUsername());
+                    currentNote = noteAppService.getShareNoteService().open(noteId, myUser.getUsername());
                     EditShareNoteController.open(myUser, (ShareNote) currentNote, openedNotes, stage);
                 } else {                                
                     EditNoteController.open(myUser, currentNote, openedNotes, stage);
                 }
-            } catch (NoteServiceException ex) {
+            } catch (NoteAppServiceException ex) {
                 showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }
         }       
@@ -440,12 +438,12 @@ public class DashboardController extends InitableController {
             //Tạo Note mới
             try { 
                 //Tạo thành công
-                newNote = noteService.create(newNote);
+                newNote = noteAppService.getNoteService().create(newNote);
                 showAlert(Alert.AlertType.INFORMATION, "Successfully create " + newNote.getHeader());
                 //Thêm vào list và load lại
                 myNotes.add(newNote);
                 initMyNotesScene(myNotes, myReceivedNotes);
-            } catch (NoteServiceException ex) {
+            } catch (NoteAppServiceException ex) {
                 showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }
         });
@@ -474,13 +472,13 @@ public class DashboardController extends InitableController {
                         deletedNote = note;
                     }
                 }
-                noteService.delete(deletedNote.getId());
+                noteAppService.getNoteService().delete(deletedNote.getId());
                 showAlert(Alert.AlertType.INFORMATION, "Successfully delete " + deletedNote.getHeader());
                 //Xóa khỏi list và load lại
                 myNotes.remove(deletedNote);
                 //Load lại My Notes Scene
                 initMyNotesScene(myNotes, myReceivedNotes);
-            } catch (NoteServiceException ex) {
+            } catch (NoteAppServiceException ex) {
                 showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }
         });
@@ -579,9 +577,9 @@ public class DashboardController extends InitableController {
         //Cập nhật User
         try { 
             //Cập nhật thành công
-            userService.update(myUser);
+            noteAppService.getUserService().update(myUser);
             showAlert(Alert.AlertType.INFORMATION, "Successfully update for " + myUser.getUsername());
-        } catch (UserServiceException ex) {
+        } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
         }
     }
