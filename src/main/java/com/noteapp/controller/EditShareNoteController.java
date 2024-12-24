@@ -1,6 +1,6 @@
 package com.noteapp.controller;
 
-import com.noteapp.common.service.NoteAppServiceException;
+import com.noteapp.service.NoteAppServiceException;
 import static com.noteapp.controller.Controller.showAlert;
 import com.noteapp.note.model.Note;
 import com.noteapp.note.model.NoteBlock;

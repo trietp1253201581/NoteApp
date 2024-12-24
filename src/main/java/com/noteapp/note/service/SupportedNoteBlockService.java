@@ -1,8 +1,8 @@
 package com.noteapp.note.service;
 
-import com.noteapp.common.dao.DAOException;
-import com.noteapp.common.service.CausedBySystemException;
-import com.noteapp.common.service.NoteAppServiceException;
+import com.noteapp.dao.DAOException;
+import com.noteapp.service.CausedBySystemException;
+import com.noteapp.service.NoteAppServiceException;
 import com.noteapp.note.dao.IConcreateBlockDAO;
 import com.noteapp.note.dao.INoteBlockDAO;
 import com.noteapp.note.model.NoteBlock;

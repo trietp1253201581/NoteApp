@@ -1,6 +1,6 @@
 package com.noteapp.note.service;
 
-import com.noteapp.common.service.NoteAppServiceException;
+import com.noteapp.service.NoteAppServiceException;
 import com.noteapp.note.model.Note;
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.noteapp.user.dao;
 
-import com.noteapp.common.dao.DAOException;
+import com.noteapp.dao.DAOException;
 import com.noteapp.user.model.User;
 import java.util.List;
 

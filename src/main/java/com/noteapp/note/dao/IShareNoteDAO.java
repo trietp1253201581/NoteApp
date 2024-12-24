@@ -1,6 +1,6 @@
 package com.noteapp.note.dao;
 
-import com.noteapp.common.dao.DAOException;
+import com.noteapp.dao.DAOException;
 import com.noteapp.note.model.ShareNote;
 import java.util.List;
 /**

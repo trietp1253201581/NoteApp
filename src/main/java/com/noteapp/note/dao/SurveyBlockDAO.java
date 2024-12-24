@@ -1,9 +1,9 @@
 package com.noteapp.note.dao;
 
-import com.noteapp.common.dao.FailedExecuteException;
-import com.noteapp.common.dao.DAOException;
-import com.noteapp.common.dao.connection.MySQLDatabaseConnection;
-import com.noteapp.common.dao.sql.SQLReader;
+import com.noteapp.dao.FailedExecuteException;
+import com.noteapp.dao.DAOException;
+import com.noteapp.dao.connection.MySQLDatabaseConnection;
+import com.noteapp.dao.sql.SQLReader;
 import com.noteapp.note.model.SurveyBlock;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

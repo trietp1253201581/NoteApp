@@ -13,10 +13,10 @@ module com.noteapp {
     
     opens com.noteapp.controller to javafx.fxml;
     exports com.noteapp.controller;
-    
-    exports com.noteapp.common.dao;
-    exports com.noteapp.common.dao.connection;
-    exports com.noteapp.common.dao.sql;
+    exports com.noteapp.dao;
+    exports com.noteapp.dao.connection;
+    exports com.noteapp.dao.sql;
+    exports com.noteapp.service;
     exports com.noteapp.user.model;
     exports com.noteapp.user.dao;
     exports com.noteapp.user.service;

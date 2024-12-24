@@ -1,7 +1,7 @@
 package com.noteapp.controller;
 
-import com.noteapp.common.service.NoteAppService;
-import com.noteapp.common.service.NoteAppServiceException;
+import com.noteapp.service.NoteAppService;
+import com.noteapp.service.NoteAppServiceException;
 import com.noteapp.user.dao.UserDAO;
 import com.noteapp.user.model.Email;
 import com.noteapp.user.service.UserService;

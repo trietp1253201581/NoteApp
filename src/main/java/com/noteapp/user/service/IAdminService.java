@@ -1,6 +1,6 @@
 package com.noteapp.user.service;
 
-import com.noteapp.common.service.NoteAppServiceException;
+import com.noteapp.service.NoteAppServiceException;
 import com.noteapp.user.model.Admin;
 import java.util.Map;
 

@@ -1,6 +1,6 @@
 package com.noteapp.controller;
 
-import com.noteapp.common.service.NoteAppService;
+import com.noteapp.service.NoteAppService;
 
 /**
  * Một class đại diện cho các controller yêu cầu sử dụng dịch vụ của

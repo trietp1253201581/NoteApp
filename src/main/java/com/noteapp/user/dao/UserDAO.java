@@ -1,11 +1,11 @@
 package com.noteapp.user.dao;
 
-import com.noteapp.common.dao.NotExistDataException;
-import com.noteapp.common.dao.FailedExecuteException;
-import com.noteapp.common.dao.DAOException;
-import com.noteapp.common.dao.DAOKeyException;
-import com.noteapp.common.dao.connection.MySQLDatabaseConnection;
-import com.noteapp.common.dao.sql.SQLReader;
+import com.noteapp.dao.NotExistDataException;
+import com.noteapp.dao.FailedExecuteException;
+import com.noteapp.dao.DAOException;
+import com.noteapp.dao.DAOKeyException;
+import com.noteapp.dao.connection.MySQLDatabaseConnection;
+import com.noteapp.dao.sql.SQLReader;
 import com.noteapp.user.model.User;
 import com.noteapp.user.model.Email;
 import java.sql.PreparedStatement;
