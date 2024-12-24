@@ -2,6 +2,13 @@ package com.noteapp.note.service;
 
 import com.noteapp.common.dao.DAOException;
 import com.noteapp.common.dao.NotExistDataException;
+<<<<<<< Updated upstream
+=======
+import com.noteapp.common.service.CausedBySystemException;
+import com.noteapp.common.service.CausedByUserException;
+import com.noteapp.common.service.NoteAppServiceException;
+import com.noteapp.note.dao.IConcreateBlockDAO;
+>>>>>>> Stashed changes
 import com.noteapp.note.dao.INoteBlockDAO;
 import com.noteapp.note.dao.INoteDAO;
 import com.noteapp.note.dao.INoteFilterDAO;
@@ -40,6 +47,7 @@ public class NoteService {
         
     }
     
+<<<<<<< Updated upstream
     /**
      * Lấy các thể hiện tương ứng cho các DAO
      */
@@ -66,15 +74,26 @@ public class NoteService {
      */
     public Note create(Note newNote) throws NoteServiceException {
         getInstanceOfDAO();
+=======
+    private void checkNullDAO() throws NoteAppServiceException {
+        if (noteDAO == null || noteFilterDAO == null) {
+            throw new CausedBySystemException("DAO is null!");
+        }
+    }
+    
+    @Override
+    public Note create(Note newNote) throws NoteAppServiceException {
+        checkNullDAO();
+>>>>>>> Stashed changes
         int noteId = newNote.getId();
         //Kiểm tra note đã tồn tại hay chưa
         try {          
             noteDAO.get(noteId);
-            throw new NoteServiceException("Already exist note!");
+            throw new CausedByUserException("Already exist note!");
         } catch (NotExistDataException nedExByGet) {
             //Nếu chưa tồn tại thì tiếp tục
         } catch (DAOException exByGet) {
-            throw new NoteServiceException(exByGet.getMessage(), exByGet.getCause());
+            throw new CausedBySystemException(exByGet.getMessage(), exByGet.getCause());
         }
         try {
             //Thêm các trường thông tin cơ bản vào CSDL Note
@@ -91,10 +110,11 @@ public class NoteService {
             //Mở Note và trả về
             return this.open(newNote.getId());
         } catch (DAOException exByCreate) {
-            throw new NoteServiceException(exByCreate.getMessage(), exByCreate.getCause());
+            throw new CausedBySystemException(exByCreate.getMessage(), exByCreate.getCause());
         }
     }
     
+<<<<<<< Updated upstream
     /**
      * Xóa một Note đã tồn tại trong CSDL
      * @param noteId id của Note cần xóa
@@ -107,6 +127,11 @@ public class NoteService {
      */
     public Note delete(int noteId) throws NoteServiceException {
         getInstanceOfDAO();
+=======
+    @Override
+    public Note delete(int noteId) throws NoteAppServiceException {
+        checkNullDAO();
+>>>>>>> Stashed changes
         try {
             //Lấy Note bằng cách mở
             Note deletedNote = this.open(noteId);
@@ -114,10 +139,11 @@ public class NoteService {
             noteDAO.delete(noteId);
             return deletedNote;
         } catch (DAOException exByGetAndDelete) {
-            throw new NoteServiceException(exByGetAndDelete.getMessage(), exByGetAndDelete.getCause());
+            throw new CausedBySystemException(exByGetAndDelete.getMessage(), exByGetAndDelete.getCause());
         }
     }
     
+<<<<<<< Updated upstream
     /**
      * Lấy tất cả các Note thuộc quyền sở hữu của User
      * @param author username của User sở hữu các Note này
@@ -130,6 +156,11 @@ public class NoteService {
      */
     public List<Note> getAll(String author) throws NoteServiceException {
         getInstanceOfDAO();
+=======
+    @Override
+    public List<Note> getAll(String author) throws NoteAppServiceException {
+        checkNullDAO();
+>>>>>>> Stashed changes
         try {
             List<Note> notes = noteDAO.getAll(author);
             List<Note> returnNotes = new ArrayList<>();
@@ -138,10 +169,11 @@ public class NoteService {
             }
             return returnNotes;
         } catch (DAOException exByGetAll) {
-            throw new NoteServiceException(exByGetAll.getMessage(), exByGetAll.getCause());
+            throw new CausedBySystemException(exByGetAll.getMessage(), exByGetAll.getCause());
         }
     }
     
+<<<<<<< Updated upstream
     /**
      * Mở một Note, cụ thể là lấy tất cả các dữ liệu liên quan tới một Note từ 
      * các CSDL Note, NoteFilter, NoteBlock, TextBlock, SurveyBlock và trả về
@@ -155,6 +187,11 @@ public class NoteService {
      */
     public Note open(int noteId) throws NoteServiceException {
         getInstanceOfDAO();
+=======
+    @Override
+    public Note open(int noteId) throws NoteAppServiceException {
+        checkNullDAO();
+>>>>>>> Stashed changes
         try {
             //Lấy các thông tin cơ bản
             Note note = noteDAO.get(noteId);
@@ -165,6 +202,7 @@ public class NoteService {
             note.setBlocks(noteBlocks);
             return note;
         } catch (DAOException exByGet) {
+<<<<<<< Updated upstream
             exByGet.printStackTrace();
             throw new NoteServiceException(exByGet.getMessage(), exByGet.getCause());
         }
@@ -187,6 +225,15 @@ public class NoteService {
      */
     public Note save(Note note) throws NoteServiceException {
         getInstanceOfDAO();
+=======
+            throw new CausedBySystemException(exByGet.getMessage(), exByGet.getCause());
+        }
+    } 
+    
+    @Override
+    public Note save(Note note) throws NoteAppServiceException {
+        checkNullDAO();
+>>>>>>> Stashed changes
         int noteId = note.getId();
         //Kiểm tra note đã tồn tại chưa
         try {
@@ -195,7 +242,7 @@ public class NoteService {
             //Nếu chưa tồn tại thì tạo note mới
             return this.create(note);
         } catch (DAOException exByGet) {
-            throw new NoteServiceException(exByGet.getMessage(), exByGet.getCause());
+            throw new CausedBySystemException(exByGet.getMessage(), exByGet.getCause());
         }
         try {
             //Cập nhật các thông tin cơ bản vào CSDL Note
@@ -210,8 +257,12 @@ public class NoteService {
             saveBlocks(note.getId(), note.getBlocks());
             return note;
         } catch (DAOException exByUpdate) {
+<<<<<<< Updated upstream
             exByUpdate.printStackTrace();
             throw new NoteServiceException(exByUpdate.getMessage(), exByUpdate.getCause());
+=======
+            throw new CausedBySystemException(exByUpdate.getMessage(), exByUpdate.getCause());
+>>>>>>> Stashed changes
         }
     }
     

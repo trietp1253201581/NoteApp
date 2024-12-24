@@ -6,6 +6,7 @@ module com.noteapp {
     requires com.mailjet.api;
     requires org.json;
     requires okhttp3;
+    requires itextpdf;
     
     opens com.noteapp to javafx.fxml;
     exports com.noteapp;
