@@ -59,7 +59,6 @@ com\noteapp\controller\DashboardController$1.class
 com\noteapp\note\dao\TextBlockDAO.class
 com\noteapp\controller\TextBlockController.class
 com\noteapp\note\dao\NoteFilterDAO$QueriesType.class
-com\noteapp\controller\InitableController.class
 com\noteapp\user\dao\AdminDAO$ColumnName.class
 com\noteapp\note\model\SurveyBlock.class
 com\noteapp\user\service\IAdminService.class
