@@ -32,7 +32,7 @@ public class UserDAO extends AbstractUserDAO implements IUserDAO {
      * Các loại Query được cung cấp
      */
     protected static enum QueriesType {
-        GET_ALL, GET, CREATE, UPDATE, DELETE;
+        GET_ALL_BY_MANAGE, GET, CREATE, UPDATE, DELETE;
     }
 
     private UserDAO() {
@@ -59,10 +59,11 @@ public class UserDAO extends AbstractUserDAO implements IUserDAO {
     }
     
     @Override
-    public List<User> getAll() throws DAOException {
+    public List<User> getAll(String admin) throws DAOException {
         try {
             //Thực thi truy vấn SQL và lấy kết quả là một bộ dữ liệu
-            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL.toString());
+            PreparedStatement preparedStatement = getPrepareStatement(QueriesType.GET_ALL_BY_MANAGE.toString());
+            preparedStatement.setString(1, admin);
             ResultSet resultSet = preparedStatement.executeQuery();
             
             List<User> users = new ArrayList<>();

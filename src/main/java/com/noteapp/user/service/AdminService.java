@@ -71,10 +71,10 @@ public class AdminService implements IAdminService {
     }    
     
     @Override
-    public Map<String, Boolean> getAllLockedStatus() throws NoteAppServiceException {
+    public Map<String, Boolean> getAllLockedStatus(String admin) throws NoteAppServiceException {
         checkNullDAO();
         try {
-            List<User> users = userDAO.getAll();
+            List<User> users = userDAO.getAll(admin);
             Map<String, Boolean> lockedStatus = new HashMap<>();
             for (User user: users) {
                 lockedStatus.put(user.getUsername(), user.isLocked());

@@ -315,7 +315,7 @@ public class DashboardController extends RequestServiceController implements Ini
             return;
         }
         if (recentlyNotes.size() > 3) {
-            recentlyNotes = recentlyNotes.subList(0, 3);
+            recentlyNotes = recentlyNotes.subList(recentlyNotes.size() - 3, recentlyNotes.size());
         }
         String filePath = Controller.DEFAULT_FXML_RESOURCE + "RecentlyNoteCardView.fxml";
         for (Note note: recentlyNotes) {

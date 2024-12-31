@@ -33,9 +33,9 @@
       </Separator>
       <Button fx:id="changeLockStatusButton" mnemonicParsing="false" prefHeight="40.0" prefWidth="100.0" styleClass="extra-scene-button" stylesheets="@dashboardStyle.css">
          <graphic>
-            <ImageView fitHeight="14.0" fitWidth="14.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fitHeight="23.0" fitWidth="29.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../image/trash.png" />
+                  <Image url="@../image/unlock.png" />
                </image>
             </ImageView>
          </graphic>

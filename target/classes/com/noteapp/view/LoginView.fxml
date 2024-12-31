@@ -48,7 +48,7 @@
          <center>
             <AnchorPane prefHeight="400.0" prefWidth="600.0" styleClass="login-form" stylesheets="@anotherStyle.css" BorderPane.alignment="CENTER">
                <children>
-                  <Text fill="#e6e6e6" layoutX="55.0" layoutY="252.0" strokeType="OUTSIDE" strokeWidth="0.0" text="NoteLite" textAlignment="CENTER" wrappingWidth="144.66666666666663">
+                  <Text layoutX="55.0" layoutY="252.0" strokeType="OUTSIDE" strokeWidth="0.0" text="NoteLite" textAlignment="CENTER" wrappingWidth="144.66666666666663">
                      <font>
                         <Font name="Tahoma Bold" size="51.0" />
                      </font>

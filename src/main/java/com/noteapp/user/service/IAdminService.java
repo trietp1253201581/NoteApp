@@ -31,11 +31,12 @@ public interface IAdminService {
     
     /**
      * Lất tất cả các thông tin bị khóa quyền hay không của các user
+     * @param admin Username của admin quản lý các User này
      * @return Một Map chứa username và trạng thái khóa tương ứng của
      * các {@link User}
      * @throws NoteAppServiceException Xảy ra khi các câu lệnh bị lỗi
      */
-    public Map<String, Boolean> getAllLockedStatus() throws NoteAppServiceException;
+    public Map<String, Boolean> getAllLockedStatus(String admin) throws NoteAppServiceException;
     
     /**
      * Cập nhật trạng thái khóa của một user

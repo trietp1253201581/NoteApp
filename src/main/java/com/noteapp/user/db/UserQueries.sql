@@ -1,6 +1,7 @@
---GET_ALL
+--GET_ALL_BY_MANAGE
 SELECT * 
 FROM users 
+WHERE admin = ?
 ORDER BY username, name, birthday, school, gender, email;
 
 --GET

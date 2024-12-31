@@ -356,18 +356,19 @@ public class EditNoteController extends RequestServiceController implements Init
             }
             boolean isLocked = false;
             try {
-                isLocked = noteAppService.getUserService().checkLocked(receiver);
+                isLocked = noteAppService.getUserService().checkLocked(myUser.getUsername());
             } catch (NoteAppServiceException ex) {
                 showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }
             if (isLocked) {
                 showAlert(Alert.AlertType.ERROR, "Your account is locked!");
+                return;
             }
             try {
                 noteAppService.getShareNoteService().share(myNote, receiver, shareType);
                 showAlert(Alert.AlertType.INFORMATION, "Successfully share!");
                 ShareNote shareNote = noteAppService.getShareNoteService().open(myNote.getId(), myUser.getUsername());
-                EditShareNoteController.open(myUser, shareNote, stage);
+                EditShareNoteController.open(myUser, shareNote, openedNotes, stage);
             } catch (NoteAppServiceException ex) {
                 showAlert(Alert.AlertType.ERROR, ex.getMessage());
             }

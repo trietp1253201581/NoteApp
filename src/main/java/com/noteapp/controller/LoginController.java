@@ -4,6 +4,7 @@ import com.noteapp.service.NoteAppService;
 import com.noteapp.service.NoteAppServiceException;
 import com.noteapp.user.dao.AdminDAO;
 import com.noteapp.user.dao.UserDAO;
+import com.noteapp.user.model.Admin;
 import com.noteapp.user.model.User;
 import com.noteapp.user.service.AdminService;
 import com.noteapp.user.service.UserService;
@@ -76,10 +77,10 @@ public class LoginController extends RequestServiceController implements Initabl
                 //Mở Dashboard của user này
                 DashboardController.open(user, stage);
             } else {
-                noteAppService.getAdminService().checkAdmin(username, password);
+                Admin admin = noteAppService.getAdminService().checkAdmin(username, password);
                 showAlert(Alert.AlertType.INFORMATION, "Successfully Login");
                 //Mở Dashboard của user này
-                AdminDashboardController.open(stage);
+                AdminDashboardController.open(admin, stage);
             }
             
         } catch (NoteAppServiceException ex) {

@@ -50,12 +50,12 @@
                         <Font name="Tahoma Bold" size="14.0" />
                      </font>
                   </Button>
-                  <Label fx:id="backLoginLabel" layoutX="157.0" layoutY="540.0" prefHeight="20.0" prefWidth="85.0" text="Back to Login" textFill="WHITE" underline="true">
+                  <Label fx:id="backLoginLabel" layoutX="157.0" layoutY="540.0" prefHeight="20.0" prefWidth="85.0" text="Back to Login" textFill="#4448c0" underline="true">
                      <font>
                         <Font size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" layoutY="33.0" prefHeight="30.0" prefWidth="400.0" text="CREATE AN ACCOUNT" textAlignment="CENTER" textFill="#ededed">
+                  <Label alignment="CENTER" layoutY="33.0" prefHeight="30.0" prefWidth="400.0" text="CREATE AN ACCOUNT" textAlignment="CENTER" textFill="#161616">
                      <font>
                         <Font name="Tahoma Bold" size="24.0" />
                      </font>

@@ -7,7 +7,7 @@ import java.util.Objects;
  * @author Nhóm 17
  * @version 1.0
  */
-public class AbstractUser {
+public abstract class AbstractUser {
     protected String username;
     protected String password;
 

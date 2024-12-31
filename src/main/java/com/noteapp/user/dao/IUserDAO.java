@@ -12,14 +12,15 @@ import java.util.List;
 public interface IUserDAO {
     
     /**
-     * Lấy tất cả các hàng trong CSDL của User
+     * Lấy tất cả các hàng trong CSDL của User được quản lý bởi một admin
+     * @param admin Username của admin quản lý các User này
      * @return Một {@link List} các {@link User}, mỗi 
      * {@link User} dại diện cho một hàng của CSDL.
      * @throws DAOException Khi kết nối bị lỗi 
      * hoặc Query không hợp lệ.
      * @see User 
      */
-    List<User> getAll() throws DAOException;
+    List<User> getAll(String admin) throws DAOException;
     
     /**
      * Lấy một {@link User} theo username

@@ -4,6 +4,7 @@ import com.noteapp.service.NoteAppService;
 import com.noteapp.service.NoteAppServiceException;
 import com.noteapp.user.dao.AdminDAO;
 import com.noteapp.user.dao.UserDAO;
+import com.noteapp.user.model.Admin;
 import com.noteapp.user.service.AdminService;
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,6 +35,11 @@ public class AdminDashboardController extends RequestServiceController implement
     private Button logoutButton;
 
     private Map<String, Boolean> lockedStatusOfUsers;
+    private Admin myAdmin;
+
+    public void setMyAdmin(Admin myAdmin) {
+        this.myAdmin = myAdmin;
+    }
     
     @Override
     public void init() {
@@ -56,7 +62,7 @@ public class AdminDashboardController extends RequestServiceController implement
 
     protected void initView() {
         try {
-            lockedStatusOfUsers = noteAppService.getAdminService().getAllLockedStatus();
+            lockedStatusOfUsers = noteAppService.getAdminService().getAllLockedStatus(myAdmin.getUsername());
             loadUsers(lockedStatusOfUsers);
         } catch (NoteAppServiceException ex) {
             showAlert(Alert.AlertType.ERROR, ex.getMessage());
@@ -129,11 +135,12 @@ public class AdminDashboardController extends RequestServiceController implement
      * Mở một giao diện Dashboard cho Admin
      * @param stage Stage được truyền vào để chứa giao diện này
      */
-    public static void open(Stage stage) {
+    public static void open(Admin myAdmin, Stage stage) {
         try {
             String filePath = Controller.DEFAULT_FXML_RESOURCE + "AdminDashboardView.fxml";
             AdminDashboardController controller = new AdminDashboardController();
             controller.setStage(stage);
+            controller.setMyAdmin(myAdmin);
             controller.loadFXMLAndSetScene(filePath);
             controller.init();
             controller.showFXML();

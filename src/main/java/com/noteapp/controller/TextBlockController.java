@@ -171,7 +171,7 @@ public class TextBlockController extends Controller implements Initable {
         for(String str: hadModifiedEditors) {
             notify += str + ", ";
         }
-        notify += "has modified their editor";
+        notify += "has modified this block!";
         changeNotify.setText(notify);
         changeNotify.setPrefWidth(Region.USE_COMPUTED_SIZE);
     }
